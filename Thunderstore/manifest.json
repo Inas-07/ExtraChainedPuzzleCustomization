@@ -1,0 +1,7 @@
+{
+    "name": "ScanPositionOverride",
+    "version_number": "1.0.0",
+    "website_url": "https://discord.gg/rRMPtv4FAh",
+    "description": "Set custom fixed scan positions",
+    "dependencies": []
+}
