@@ -11,6 +11,7 @@ using UnityEngine;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using ScanPosOverride.JSON;
 using GTFO.API.Utilities;
+using HarmonyLib;
 
 
 namespace ScanPosOverride
@@ -27,8 +28,14 @@ namespace ScanPosOverride
 
         // MainLevelLayout, List of puzzles to override
         private static Dictionary<uint, List<PuzzleOverride>> PuzzleOverrides = new();
+        
+        // Map `CP_Bioscan_Core` to the PuzzleOverride Index
+        private static Dictionary<IntPtr, uint> PuzzleIndex = new();
+        
+        
         private static readonly string OVERRIDE_SCAN_POS_PATH = Path.Combine(MTFOUtil.CustomPath, "ScanPositionOverride");
         private static LiveEditListener listener = null;
+        private static Harmony m_Harmony = null;
 
         private uint ActiveExpedition => RundownManager.ActiveExpedition.LevelLayoutData;
 
@@ -64,6 +71,9 @@ namespace ScanPosOverride
 
             listener = LiveEdit.CreateListener(OVERRIDE_SCAN_POS_PATH, "*.json", includeSubDir: true);
             listener.FileChanged += LiveEdit_FileChanged;
+
+            //m_Harmony = new Harmony("ScanPosOverride.Patches");
+            //m_Harmony.PatchAll();
         }
 
         private static void LiveEdit_FileChanged(LiveEditEventArgs e)
@@ -88,27 +98,25 @@ namespace ScanPosOverride
         private void OnExpeditionStarted()
         {
             byte num = 0;
-            for (int index1 = 0; index1 < ChainedPuzzleManager.Current.m_instances.Count; ++index1)
+            for (int i = 0; i < ChainedPuzzleManager.Current.m_instances.Count; ++i)
             {
-                Il2CppArrayBase<CP_Bioscan_Core> componentsInChildren1 = ChainedPuzzleManager.Current.m_instances[index1].m_parent.GetComponentsInChildren<CP_Bioscan_Core>();
-                if (componentsInChildren1 != null)
+                Il2CppArrayBase<CP_Bioscan_Core> bioscanCoreChildren = ChainedPuzzleManager.Current.m_instances[i].m_parent.GetComponentsInChildren<CP_Bioscan_Core>();
+                if (bioscanCoreChildren != null)
                 {
-                    for (int index2 = 0; index2 < componentsInChildren1.Count; ++index2)
+                    for (int j = 0; j < bioscanCoreChildren.Count; ++j)
                     {
-                        Action<byte, CP_Bioscan_Core> onBioscan = OnBioscan;
-                        if (onBioscan != null)
-                            onBioscan(num, componentsInChildren1[index2]);
+                        if (OnBioscan != null) 
+                            OnBioscan(num, bioscanCoreChildren[j]);
                         ++num;
                     }
                 }
-                Il2CppArrayBase<CP_Cluster_Core> componentsInChildren2 = ChainedPuzzleManager.Current.m_instances[index1].m_parent.GetComponentsInChildren<CP_Cluster_Core>();
-                if (componentsInChildren2 != null)
+                Il2CppArrayBase<CP_Cluster_Core> clusterCoreChildren = ChainedPuzzleManager.Current.m_instances[i].m_parent.GetComponentsInChildren<CP_Cluster_Core>();
+                if (clusterCoreChildren != null)
                 {
-                    for (int index3 = 0; index3 < componentsInChildren2.Count; ++index3)
+                    for (int k = 0; k < clusterCoreChildren.Count; ++k)
                     {
-                        Action<byte, CP_Cluster_Core> onClusterscan = OnClusterscan;
-                        if (onClusterscan != null)
-                            onClusterscan(num, componentsInChildren2[index3]);
+                        if (OnClusterscan != null)
+                            OnClusterscan(num, clusterCoreChildren[k]);
                         ++num;
                     }
                 }
@@ -120,10 +128,10 @@ namespace ScanPosOverride
             List<PuzzleOverride> puzzleOverrideList;
             if (PuzzleOverrides.TryGetValue(ActiveExpedition, out puzzleOverrideList))
             {
-                for (int index = 0; index < puzzleOverrideList.Count; ++index)
+                for (int i = 0; i < puzzleOverrideList.Count; ++i)
                 {
-                    if (puzzleOverrideList[index].Index == count)
-                        return puzzleOverrideList[index];
+                    if (puzzleOverrideList[i].Index == count)
+                        return puzzleOverrideList[i];
                 }
             }
             return null;
@@ -131,11 +139,12 @@ namespace ScanPosOverride
 
         private void MoveBio(byte count, CP_Bioscan_Core scan)
         {
-            PuzzleOverride modifaction = this.GetModifaction(count);
+            PuzzleOverride modifaction = GetModifaction(count);
             if (modifaction == null)
                 return;
             scan.gameObject.transform.position = modifaction.Position.ToVector3();
             scan.gameObject.transform.rotation = modifaction.Rotation.ToQuaternion();
+
             if (!scan.m_isMovable || modifaction.TPositions.Count <= 0)
                 return;
 
