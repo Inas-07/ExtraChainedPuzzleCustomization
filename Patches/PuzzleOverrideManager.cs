@@ -71,64 +71,6 @@ namespace ScanPosOverride.Patches
         // For each ChainedPuzzleInstance: firstly output info of CP_Bioscan_Core, then CP_Cluster_Core
         public void OnBuildDone_OutputLevelPuzzleInfo()
         {
-            //// iChainedPuzzleOwner -> info list
-            //Dictionary<iChainedPuzzleOwner, List<CP_Bioscan_Core>> collectedBioscanCoreInfo = new();
-            //Dictionary<iChainedPuzzleOwner, List<CP_Cluster_Core>> collectedClusterCoreInfo = new();
-
-            //foreach (CP_Bioscan_Core bioscanCore in bioscanCoreInfo.Keys)
-            //{
-            //    iChainedPuzzleOwner iChainedPuzzleOwner = ChainedPuzzleInstanceOwner(bioscanCore);
-            //    if (iChainedPuzzleOwner == null) continue;
-
-            //    List<CP_Bioscan_Core> bioscanCores;
-            //    if (!collectedBioscanCoreInfo.ContainsKey(iChainedPuzzleOwner))
-            //    {
-            //        bioscanCores = new List<CP_Bioscan_Core>();
-            //        collectedBioscanCoreInfo.Add(iChainedPuzzleOwner, bioscanCores);
-            //    }
-            //    else bioscanCores = collectedBioscanCoreInfo[iChainedPuzzleOwner];
-
-            //    bioscanCores.Add(bioscanCore);
-            //}
-
-            //foreach (CP_Cluster_Core clusterCore in clusterCoreInfo.Keys)
-            //{
-            //    iChainedPuzzleOwner iChainedPuzzleOwner = clusterCore.m_owner;
-            //    if (iChainedPuzzleOwner == null) continue;
-
-            //    List<CP_Cluster_Core> clusterCores;
-            //    if (!collectedClusterCoreInfo.ContainsKey(iChainedPuzzleOwner))
-            //    {
-            //        clusterCores = new List<CP_Cluster_Core>();
-            //        collectedClusterCoreInfo.Add(iChainedPuzzleOwner, clusterCores);
-            //    }
-            //    else clusterCores = collectedClusterCoreInfo[iChainedPuzzleOwner];
-
-            //    clusterCores.Add(clusterCore);
-            //}
-
-            //HashSet<iChainedPuzzleOwner> levelChainedPuzzleOwners = collectedBioscanCoreInfo.Keys.ToHashSet();
-            //foreach(var owner in collectedClusterCoreInfo.Keys)
-            //    levelChainedPuzzleOwners.Add(owner);
-
-            //List<ChainedPuzzleInstance> levelChainedPuzzleInstances = new();
-            //foreach(var owner in levelChainedPuzzleOwners)
-            //{
-            //    ChainedPuzzleInstance chainedPuzzleInstance = owner.TryCast<ChainedPuzzleInstance>();
-            //    if(chainedPuzzleInstance == null)
-            //    {
-            //        Logger.Error("Cannot cast iChainedPuzzleOwner to ChainedPuzzleInstance. WTF?");
-            //        continue;
-            //    }
-
-            //    levelChainedPuzzleInstances.Add(chainedPuzzleInstance);
-            //}
-
-            //if(levelChainedPuzzleInstances.Count != ChainedPuzzleManager.Current.m_instances.Count)
-            //{
-            //    Logger.Error("levelChainedPuzzleInstances.Count != ChainedPuzzleManager.Current.m_instances.Count!"); 
-            //}
-
             List<ChainedPuzzleInstance> levelChainedPuzzleInstances = new();
             foreach(var cpInstance in ChainedPuzzleManager.Current.m_instances)
                 levelChainedPuzzleInstances.Add(cpInstance);
@@ -195,6 +137,7 @@ namespace ScanPosOverride.Patches
                             chainedPuzzlesInfo.Append("type: CP_Bioscan_Core\n");
                             chainedPuzzlesInfo.Append($"PuzzleOverrideIndex: {puzzleOverrideIndex}\n");
                         }
+                        chainedPuzzlesInfo.Append("=== Clustered puzzles END ===\n");
                     }
                     else
                     {

@@ -29,6 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="JSON\LocalizedTextConverter.cs" />
     <Compile Include="Patches\PuzzleOverrideManager.cs" />
     <Compile Include="Patches\Patch_ChainedPuzzleInstance_SetupMovement.cs" />
     <Compile Include="Patches\Patch_CP_Cluster_Core_Setup.cs" />

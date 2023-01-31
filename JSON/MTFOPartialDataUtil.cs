@@ -13,6 +13,7 @@ namespace ScanPosOverride.JSON
         public const string PLUGIN_GUID = "MTFO.Extension.PartialBlocks";
 
         public static JsonConverter PersistentIDConverter { get; private set; } = null;
+        public static JsonConverter LocalizedTextConverter { get; private set; } = null;
         public static bool IsLoaded { get; private set; } = false;
         public static bool Initialized { get; private set; } = false;
         public static string PartialDataPath { get; private set; } = string.Empty;
@@ -38,6 +39,10 @@ namespace ScanPosOverride.JSON
                     if (dataManager is null)
                         throw new Exception("Unable to Find PartialDataManager Class");
 
+                    var localizedTextConverterType = types.First(t => t.Name == "LocalizedTextConverter");
+                    if (localizedTextConverterType is null)
+                        throw new Exception("Unable to Find LocalizedTextConverter Class");
+
                     var initProp = dataManager.GetProperty("Initialized", BindingFlags.Public | BindingFlags.Static);
                     var dataPathProp = dataManager.GetProperty("PartialDataPath", BindingFlags.Public | BindingFlags.Static);
                     var configPathProp = dataManager.GetProperty("ConfigPath", BindingFlags.Public | BindingFlags.Static);
@@ -56,6 +61,7 @@ namespace ScanPosOverride.JSON
                     ConfigPath = (string)configPathProp.GetValue(null);
 
                     PersistentIDConverter = (JsonConverter)Activator.CreateInstance(converterType);
+                    LocalizedTextConverter = (JsonConverter)Activator.CreateInstance(localizedTextConverterType);
                     IsLoaded = true;
                 }
                 catch (Exception e)
