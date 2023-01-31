@@ -29,8 +29,10 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Patches\PatchUtils.cs" />
-    <Compile Include="Patches\Patch_UseStaticBioscanPoints_FixClusterScan.cs" />
+    <Compile Include="Patches\PuzzleOverrideManager.cs" />
+    <Compile Include="Patches\Patch_ChainedPuzzleInstance_SetupMovement.cs" />
+    <Compile Include="Patches\Patch_CP_Cluster_Core_Setup.cs" />
+    <Compile Include="Patches\Patch_CP_Bioscan_Core_Setup.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverrideJsonFile.cs" />
     <Compile Include="JSON\Il2CppListConverter.cs" />
     <Compile Include="JSON\Il2CppListConverterFactory.cs" />

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-
+using GameData;
 namespace ScanPosOverride.PuzzleOverrideData
 {
     internal sealed class PuzzleOverride
@@ -12,5 +12,7 @@ namespace ScanPosOverride.PuzzleOverrideData
 
         // system list
         public List<Vec3> TPositions { get; set; } = new List<Vec3>();
+
+        public List<WardenObjectiveEventData> EventsOnPuzzleSolved { get; set; } = new();
     }
 }
