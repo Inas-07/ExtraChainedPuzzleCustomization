@@ -6,7 +6,7 @@ using Il2CppSystem.Text;
 
 namespace ScanPosOverride.Managers
 {
-    internal class PuzzleReqItemManager
+    public class PuzzleReqItemManager
     {
         public static readonly PuzzleReqItemManager Current;
 
@@ -20,7 +20,7 @@ namespace ScanPosOverride.Managers
         // core.PlayerScanner -> core
         private Dictionary<System.IntPtr, CP_Bioscan_Core> movableScansWithReqItems = new();
 
-        public int Register(CarryItemPickup_Core item)
+        internal int Register(CarryItemPickup_Core item)
         {
             int allotedIndex = itemIndexCounter;
             itemIndexCounter += 1;
@@ -29,39 +29,50 @@ namespace ScanPosOverride.Managers
             return allotedIndex;
         }
 
-        public void RegisterForAddingReqItems(CP_Bioscan_Core core, List<int> itemsIndices) => bioscanCoresToAddReqItems.Add((core, itemsIndices));
+        internal void QueueForAddingReqItems(CP_Bioscan_Core core, List<int> itemsIndices) => bioscanCoresToAddReqItems.Add((core, itemsIndices));
 
-        public void RegisterForAddingReqItems(CP_Cluster_Core core, List<int> itemsIndices) => clusterCoresToAddReqItems.Add((core, itemsIndices));
+        internal void QueueForAddingReqItems(CP_Cluster_Core core, List<int> itemsIndices) => clusterCoresToAddReqItems.Add((core, itemsIndices));
 
-        public CP_Bioscan_Core GetMovableCoreWithReqItem(CP_PlayerScanner scanner) => movableScansWithReqItems.ContainsKey(scanner.Pointer) ? movableScansWithReqItems[scanner.Pointer] : null; 
+        internal CP_Bioscan_Core GetMovableCoreWithReqItem(CP_PlayerScanner scanner) => movableScansWithReqItems.ContainsKey(scanner.Pointer) ? movableScansWithReqItems[scanner.Pointer] : null; 
 
-        private void AddReqItems(CP_Bioscan_Core puzzle, List<int> itemsIndices)
+        public bool AddReqItems(CP_Bioscan_Core puzzle, int itemIndex)
         {
-            if (puzzle == null || itemsIndices == null || itemsIndices.Count < 1) return;
+            // Issue: cannot detect duplicate added items.
+            // User is now responsible for not adding duplicate.
+            if (puzzle == null) return false;
+
+            if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
+            {
+                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                return false;
+            }
+
+            CarryItemPickup_Core carryItemPickup_Core = BigPickupItemsInLevel[itemIndex];
+            puzzle.AddRequiredItems(new iWardenObjectiveItem[1] { new iWardenObjectiveItem(carryItemPickup_Core.Pointer) });
+
+            return true;
+        }
+
+        public bool AddReqItems(CP_Bioscan_Core puzzle, List<int> itemsIndices)
+        {
+            if (puzzle == null || itemsIndices == null || itemsIndices.Count < 1) return false;
 
             bool addedReqItem = false;
 
             foreach (int itemIndex in itemsIndices.ToHashSet())
             {
-                if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
-                {
-                    Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
-                    continue;
-                }
-
-                CarryItemPickup_Core carryItemPickup_Core = BigPickupItemsInLevel[itemIndex];
-                puzzle.AddRequiredItems(new iWardenObjectiveItem[1] { new iWardenObjectiveItem(carryItemPickup_Core.Pointer) });
-
-                addedReqItem = true;
+                addedReqItem |= AddReqItems(puzzle, itemIndex);
             }
 
             if(puzzle.IsMovable && addedReqItem)
             {
                 movableScansWithReqItems.Add(puzzle.m_playerScanner.Pointer, puzzle);
             }
+
+            return addedReqItem;
         }
 
-        private void AddRegisteredReqItems()
+        private void AddQueuedReqItems()
         {
             foreach (var tuple in bioscanCoresToAddReqItems)
             {
@@ -90,7 +101,7 @@ namespace ScanPosOverride.Managers
             }
         }
 
-        private void OutputLevelBigPickupInfo()
+        public void OutputLevelBigPickupInfo()
         {
             StringBuilder info = new();
             info.AppendLine();
@@ -130,7 +141,7 @@ namespace ScanPosOverride.Managers
 
         internal void OnEnterLevel()
         {
-            AddRegisteredReqItems();
+            AddQueuedReqItems();
             OutputLevelBigPickupInfo();
         }
 

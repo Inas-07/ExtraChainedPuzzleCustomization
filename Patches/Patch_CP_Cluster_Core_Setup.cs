@@ -76,7 +76,7 @@ namespace ScanPosOverride.Patches
 
             if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
             {
-                PuzzleReqItemManager.Current.RegisterForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
+                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
 
             Logger.Warning("Overriding CP_Cluster_Core!");

@@ -112,7 +112,7 @@ namespace ScanPosOverride.Patches
 
             if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
             {
-                PuzzleReqItemManager.Current.RegisterForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
+                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
             
             Logger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));

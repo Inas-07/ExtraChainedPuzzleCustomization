@@ -7,7 +7,7 @@ using LevelGeneration;
 
 namespace ScanPosOverride.Managers
 {
-    internal class PuzzleOverrideManager
+    public class PuzzleOverrideManager
     {
         public static uint MainLevelLayout => RundownManager.ActiveExpedition.LevelLayoutData;
 
@@ -178,7 +178,7 @@ namespace ScanPosOverride.Managers
         }
 
         // find iChainedPuzzleOwner, which can be casted to `ChainedPuzzleInstance`.
-        private iChainedPuzzleOwner ChainedPuzzleInstanceOwner(CP_Bioscan_Core bioscanCore)
+        public iChainedPuzzleOwner ChainedPuzzleInstanceOwner(CP_Bioscan_Core bioscanCore)
         {
             if (bioscanCore == null) return null;
 
