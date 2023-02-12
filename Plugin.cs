@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Unity.IL2CPP;
-using GTFO.API;
 using ScanPosOverride.PuzzleOverrideData;
 using System.Collections.Generic;
 using System.IO;

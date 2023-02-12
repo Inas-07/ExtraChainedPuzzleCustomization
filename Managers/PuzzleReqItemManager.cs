@@ -35,6 +35,8 @@ namespace ScanPosOverride.Managers
 
         internal CP_Bioscan_Core GetMovableCoreWithReqItem(CP_PlayerScanner scanner) => movableScansWithReqItems.ContainsKey(scanner.Pointer) ? movableScansWithReqItems[scanner.Pointer] : null; 
 
+        public CarryItemPickup_Core GetBigPickupItem(int bigPickupInLevelIndex) => BigPickupItemsInLevel.ContainsKey(bigPickupInLevelIndex) ? BigPickupItemsInLevel[bigPickupInLevelIndex] : null;
+
         public bool AddReqItems(CP_Bioscan_Core puzzle, int itemIndex)
         {
             // Issue: cannot detect duplicate added items.
@@ -49,6 +51,28 @@ namespace ScanPosOverride.Managers
 
             CarryItemPickup_Core carryItemPickup_Core = BigPickupItemsInLevel[itemIndex];
             puzzle.AddRequiredItems(new iWardenObjectiveItem[1] { new iWardenObjectiveItem(carryItemPickup_Core.Pointer) });
+
+            return true;
+        }
+
+        public bool AddReqItems(CP_Cluster_Core puzzle, int itemIndex)
+        {
+            // Issue: cannot detect duplicate added items.
+            // User is now responsible for not adding duplicate.
+            if (puzzle == null) return false;
+
+            if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
+            {
+                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                return false;
+            }
+
+            CarryItemPickup_Core carryItemPickup_Core = BigPickupItemsInLevel[itemIndex];
+
+            foreach(var childCore in puzzle.m_childCores)
+            {
+                childCore.AddRequiredItems(new iWardenObjectiveItem[1] { new iWardenObjectiveItem(carryItemPickup_Core.Pointer) });
+            }
 
             return true;
         }
@@ -70,6 +94,41 @@ namespace ScanPosOverride.Managers
             }
 
             return addedReqItem;
+        }
+
+        public void RemoveReqItem(CP_Bioscan_Core puzzle, int itemIndex)
+        {
+            if (puzzle == null) return;
+
+            if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
+            {
+                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                return;
+            }
+
+            CarryItemPickup_Core carryItemPickup_Core = BigPickupItemsInLevel[itemIndex];
+
+            // accidentally find this function.
+            // untested
+            puzzle.RemoveRequiredItems(new iWardenObjectiveItem[1] { new iWardenObjectiveItem(carryItemPickup_Core.Pointer) });
+        }
+
+        public void RemoveReqItem(CP_Cluster_Core puzzle, int itemIndex)
+        {
+            if (puzzle == null) return;
+
+            if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
+            {
+                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                return;
+            }
+
+            CarryItemPickup_Core carryItemPickup_Core = BigPickupItemsInLevel[itemIndex];
+
+            foreach(var childCore in puzzle.m_childCores)
+            {
+                childCore.RemoveRequiredItems(new iWardenObjectiveItem[1] { new iWardenObjectiveItem(carryItemPickup_Core.Pointer) });
+            }
         }
 
         private void AddQueuedReqItems()
