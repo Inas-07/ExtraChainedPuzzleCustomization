@@ -4,6 +4,7 @@ using LevelGeneration;
 using UnityEngine;
 using ScanPosOverride.PuzzleOverrideData;
 using GameData;
+using ScanPosOverride.Managers;
 
 namespace ScanPosOverride.Patches
 {
@@ -80,15 +81,19 @@ namespace ScanPosOverride.Patches
             // -----------------------------------------
             //   modify this puzzle position / rotation
             // -----------------------------------------
-            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.register(__instance);
+            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
             PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
             // No override. use vanilla
             if (puzzleOverride == null) return;
 
-            __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
+            if (puzzleOverride.Position.x != 0.0 || puzzleOverride.Position.y != 0.0 || puzzleOverride.Position.z != 0.0
+                || puzzleOverride.Rotation.x != 0.0 || puzzleOverride.Rotation.y != 0.0 || puzzleOverride.Rotation.z != 0.0)
+            {
+                __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
+            }
 
-            if(puzzleOverride.EventsOnPuzzleSolved != null && puzzleOverride.EventsOnPuzzleSolved.Count > 0) 
+            if (puzzleOverride.EventsOnPuzzleSolved != null && puzzleOverride.EventsOnPuzzleSolved.Count > 0) 
             {
                 __instance.add_OnPuzzleDone(new System.Action<int>((i) => {
                     foreach(WardenObjectiveEventData e in puzzleOverride.EventsOnPuzzleSolved)
@@ -98,16 +103,19 @@ namespace ScanPosOverride.Patches
                 }));
             }
 
-            Logger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));
-
             // no spline for T scan
             // prolly work for "clustered T-scan" as well?
             if (__instance.m_movingComp != null && __instance.m_movingComp.IsMoveConfigured)
             {
                 revealWithHoloPath = false;
             }
+
+            if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
+            {
+                PuzzleReqItemManager.Current.RegisterForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
+            }
+            
+            Logger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));
         }
-    
-    
     }
 }

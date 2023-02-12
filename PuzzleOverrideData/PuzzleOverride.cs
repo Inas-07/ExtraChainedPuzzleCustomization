@@ -10,8 +10,9 @@ namespace ScanPosOverride.PuzzleOverrideData
 
         public Vec3 Rotation { get; set; } = new Vec3();
 
-        // system list
         public List<Vec3> TPositions { get; set; } = new List<Vec3>();
+
+        public List<int> RequiredItemsIndices { get; set; } = new();
 
         public List<WardenObjectiveEventData> EventsOnPuzzleSolved { get; set; } = new();
     }

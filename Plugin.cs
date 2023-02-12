@@ -11,7 +11,7 @@ using HarmonyLib;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.1.0")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.2.0")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
@@ -21,11 +21,7 @@ namespace ScanPosOverride
         // MainLevelLayout, List of puzzles to override
         private static Dictionary<uint, Dictionary<uint, PuzzleOverride>> PuzzleOverrides = new();
 
-        // Map `CP_Bioscan_Core` to the PuzzleOverride Index
-        // Note: CP_Cluster_Core is considered the "cluster position"
-        //       while CP_Bioscan_Core could both be the clustered scan point and single scan point.
-
-        public static readonly string OVERRIDE_SCAN_POS_PATH = Path.Combine(BepInEx.Paths.BepInExRootPath, "GameData", "ScanPositionOverrides");
+        public static readonly string OVERRIDE_SCAN_POS_PATH = Path.Combine(Paths.BepInExRootPath, "GameData", "ScanPositionOverrides");
 
         private static LiveEditListener listener = null;
         private static Harmony m_Harmony = null;

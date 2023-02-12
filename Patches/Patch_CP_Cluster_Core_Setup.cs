@@ -2,6 +2,7 @@
 using GameData;
 using HarmonyLib;
 using LevelGeneration;
+using ScanPosOverride.Managers;
 using ScanPosOverride.PuzzleOverrideData;
 using System.Reflection.Metadata.Ecma335;
 using UnityEngine;
@@ -53,11 +54,16 @@ namespace ScanPosOverride.Patches
             // -----------------------------------------
             //   modify clustering position
             // -----------------------------------------
-            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.register(__instance);
+            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
             PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
             if (puzzleOverride == null) return;
 
-            __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
+            if (puzzleOverride.Position.x != 0.0 || puzzleOverride.Position.y != 0.0 || puzzleOverride.Position.z != 0.0
+                || puzzleOverride.Rotation.x != 0.0 || puzzleOverride.Rotation.y != 0.0 || puzzleOverride.Rotation.z != 0.0)
+            {
+                __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
+            }
+
             if (puzzleOverride.EventsOnPuzzleSolved != null && puzzleOverride.EventsOnPuzzleSolved.Count > 0)
             {
                 __instance.add_OnPuzzleDone(new System.Action<int>((i) => {
@@ -66,6 +72,11 @@ namespace ScanPosOverride.Patches
                         WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(e, eWardenObjectiveEventTrigger.None, true);
                     }
                 }));
+            }
+
+            if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
+            {
+                PuzzleReqItemManager.Current.RegisterForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
 
             Logger.Warning("Overriding CP_Cluster_Core!");
@@ -84,7 +95,11 @@ namespace ScanPosOverride.Patches
 
                 PuzzleOverride TScanPositions = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
-                if(TScanPositions == null || TScanPositions.TPositions == null || TScanPositions.TPositions.Count < 1) continue;
+                if (TScanPositions == null || TScanPositions.TPositions == null || TScanPositions.TPositions.Count < 1)
+                {
+                    Logger.Error("No Override for this T-Scan, falling back to vanilla impl.");
+                    continue;
+                }
 
                 CP_Bioscan_Core TScanCore = new CP_Bioscan_Core(childCore.Pointer);
 

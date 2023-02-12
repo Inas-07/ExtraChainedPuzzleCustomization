@@ -2,6 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 using ScanPosOverride.PuzzleOverrideData;
+using ScanPosOverride.Managers;
 
 namespace ScanPosOverride.Patches
 {
@@ -37,11 +38,12 @@ namespace ScanPosOverride.Patches
 
             PuzzleOverride TScanPosition = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, TScanPuzzleIndex);
 
-            if (TScanPosition == null)
+            if (TScanPosition == null || TScanPosition.TPositions.Count < 1)
             {
                 Logger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                 return true;
             }
+
 
             foreach(var pos in TScanPosition.TPositions)
             {

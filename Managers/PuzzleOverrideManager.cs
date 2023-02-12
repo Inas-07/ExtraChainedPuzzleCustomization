@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 using GTFO.API;
 using LevelGeneration;
-using ScanPosOverride.PuzzleOverrideData;
-using System.Linq;
 
-namespace ScanPosOverride.Patches
+namespace ScanPosOverride.Managers
 {
     internal class PuzzleOverrideManager
     {
@@ -26,7 +24,7 @@ namespace ScanPosOverride.Patches
 
         private uint puzzleOverrideIndex = 1u;
 
-        public uint register(CP_Bioscan_Core __instance)
+        public uint Register(CP_Bioscan_Core __instance)
         {
             if (__instance == null) return 0u;
 
@@ -46,7 +44,7 @@ namespace ScanPosOverride.Patches
             return allotedIndex;
         }
 
-        public uint register(CP_Cluster_Core __instance)
+        public uint Register(CP_Cluster_Core __instance)
         {
             if (__instance == null) return 0u;
 
@@ -55,7 +53,7 @@ namespace ScanPosOverride.Patches
             if (!clusterCoreInfo.ContainsKey(__instance))
             {
                 clusterCoreInfo.Add(__instance, allotedIndex);
-                clusterCoreInfo_IntPtr.Add(__instance.Pointer, allotedIndex);  
+                clusterCoreInfo_IntPtr.Add(__instance.Pointer, allotedIndex);
             }
             else
             {
@@ -69,13 +67,14 @@ namespace ScanPosOverride.Patches
         // output by chained puzzle instance.
         // ordered by DimensionIndex, Layer, LocalIndex, PuzzleOverrideIndex.
         // For each ChainedPuzzleInstance: firstly output info of CP_Bioscan_Core, then CP_Cluster_Core
-        public void OnBuildDone_OutputLevelPuzzleInfo()
+        public void OutputLevelPuzzleInfo()
         {
             List<ChainedPuzzleInstance> levelChainedPuzzleInstances = new();
-            foreach(var cpInstance in ChainedPuzzleManager.Current.m_instances)
+            foreach (var cpInstance in ChainedPuzzleManager.Current.m_instances)
                 levelChainedPuzzleInstances.Add(cpInstance);
 
-            levelChainedPuzzleInstances.Sort((c1, c2) => {
+            levelChainedPuzzleInstances.Sort((c1, c2) =>
+            {
                 LG_Zone z1 = c1.m_sourceArea.m_zone;
                 LG_Zone z2 = c2.m_sourceArea.m_zone;
                 if (z1.DimensionIndex != z2.DimensionIndex) return (uint)z1.DimensionIndex < (uint)z2.DimensionIndex ? -1 : 1;
@@ -95,7 +94,7 @@ namespace ScanPosOverride.Patches
                 chainedPuzzlesInfo.Append("----");
 
                 // could be either CP_Bioscan_Core or CP_Cluster_Core
-                for(int i = 0; i < chainedPuzzleInstance.m_chainedPuzzleCores.Count; i++)
+                for (int i = 0; i < chainedPuzzleInstance.m_chainedPuzzleCores.Count; i++)
                 {
                     iChainedPuzzleCore core = chainedPuzzleInstance.m_chainedPuzzleCores[i];
 
@@ -113,7 +112,7 @@ namespace ScanPosOverride.Patches
                     {
                         uint clusterCoreOverrideIndex = clusterCoreInfo_IntPtr[core.Pointer];
                         CP_Cluster_Core clusterCore = core.TryCast<CP_Cluster_Core>();
-                        if(clusterCore == null)
+                        if (clusterCore == null)
                         {
                             Logger.Error("Found cluster core Pointer, but TryCast failed.");
                             continue;
@@ -174,7 +173,7 @@ namespace ScanPosOverride.Patches
         static PuzzleOverrideManager()
         {
             Current = new();
-            LevelAPI.OnBuildDone += Current.OnBuildDone_OutputLevelPuzzleInfo;
+            LevelAPI.OnEnterLevel += Current.OutputLevelPuzzleInfo;
             LevelAPI.OnLevelCleanup += Current.Clear;
         }
 
@@ -186,7 +185,7 @@ namespace ScanPosOverride.Patches
             iChainedPuzzleOwner owner = bioscanCore.Owner;
 
             ChainedPuzzleInstance cpInstance = owner.TryCast<ChainedPuzzleInstance>();
-            if(cpInstance != null) return owner;
+            if (cpInstance != null) return owner;
 
             CP_Cluster_Core clusterOwner = owner.TryCast<CP_Cluster_Core>();
             if (clusterOwner != null)
