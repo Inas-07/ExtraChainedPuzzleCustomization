@@ -6,11 +6,11 @@ using System.IO;
 using ScanPosOverride.JSON;
 using GTFO.API.Utilities;
 using HarmonyLib;
-
+using MTFO.API;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.2.0")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.2.5")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
@@ -20,7 +20,7 @@ namespace ScanPosOverride
         // MainLevelLayout, List of puzzles to override
         private static Dictionary<uint, Dictionary<uint, PuzzleOverride>> PuzzleOverrides = new();
 
-        public static readonly string OVERRIDE_SCAN_POS_PATH = Path.Combine(Paths.BepInExRootPath, "GameData", "ScanPositionOverrides");
+        public static readonly string OVERRIDE_SCAN_POS_PATH = Path.Combine(MTFOPathAPI.CustomPath, "ScanPositionOverrides");
 
         private static LiveEditListener listener = null;
         private static Harmony m_Harmony = null;
@@ -30,7 +30,12 @@ namespace ScanPosOverride
             Logger.Error(OVERRIDE_SCAN_POS_PATH);
             if (!Directory.Exists(OVERRIDE_SCAN_POS_PATH))
             {
-                Logger.Error("Did not find ScanPositionOverrides folder, will not load.");
+                Directory.CreateDirectory(OVERRIDE_SCAN_POS_PATH);
+                var file = File.CreateText(Path.Combine(OVERRIDE_SCAN_POS_PATH, "Template.json"));
+                file.WriteLine(Json.Serialize(new PuzzleOverrideJsonFile()));
+                file.Flush();
+                file.Close();
+
                 return;
             }
 

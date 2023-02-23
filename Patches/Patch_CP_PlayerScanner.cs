@@ -55,10 +55,7 @@ namespace ScanPosOverride.Patches
                         || (scanner.m_playerRequirement == PlayerRequirement.Solo && playersInScanCount == 1))
                     {
                         scanSpeed = scanner.m_scanSpeeds[0];
-                        //Logger.Warning("Requirement All / Solo satisfied");
                     }
-
-                    //Logger.Warning($"Scan speed: {scanSpeed}");
 
                     bool hasPositiveScanSpeed = scanSpeed > 0.0f;
                     if (hasPositiveScanSpeed)
@@ -88,17 +85,13 @@ namespace ScanPosOverride.Patches
                             }
                         }
 
-                        //Logger.Warning($"ScanShouldProgress: {ScanShouldProgress}");
-
                         if (ScanShouldProgress)
                         {
                             core.m_movingComp.ResumeMovement();
-                            //Logger.Warning("core.m_movingComp.ResumeMovement()");
                         }
                         else
                         {
                             core.m_movingComp.PauseMovement();
-                            //Logger.Warning("core.m_movingComp.PauseMovement()");
                         }
 
                     }
@@ -163,8 +156,12 @@ namespace ScanPosOverride.Patches
 
         static Patch_CP_PlayerScanner()
         {
+            foreach (var wrapper in movableScanWithReqItem.Values)
+            {
+                wrapper.StopScan();
+            }
+
             LevelAPI.OnLevelCleanup += movableScanWithReqItem.Clear;
         }
-
     }
 }

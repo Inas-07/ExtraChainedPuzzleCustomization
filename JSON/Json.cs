@@ -43,9 +43,9 @@ namespace ScanPosOverride.JSON
             return JsonSerializer.Deserialize(json, type, _setting);
         }
 
-        public static string Serialize(object value, Type type)
+        public static string Serialize<T>(T value)
         {
-            return JsonSerializer.Serialize(value, type, _setting);
+            return JsonSerializer.Serialize(value, _setting);
         }
 
         public static void Load<T>(string file, out T config) where T : new()

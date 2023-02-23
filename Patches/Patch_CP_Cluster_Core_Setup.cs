@@ -79,6 +79,11 @@ namespace ScanPosOverride.Patches
                 PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
 
+            if(puzzleOverride.ConcurrentCluster)
+            {
+
+            }
+
             Logger.Warning("Overriding CP_Cluster_Core!");
         }
 

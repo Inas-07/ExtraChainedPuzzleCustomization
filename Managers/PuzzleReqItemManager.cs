@@ -190,7 +190,7 @@ namespace ScanPosOverride.Managers
             foreach (CarryItemPickup_Core item in allBigPickups)
             {
                 info.AppendLine($"Item Name: {item.ItemDataBlock.publicName}");
-                info.AppendLine($"Zone {item.SpawnNode.m_zone.Alias}, Layer {item.SpawnNode.LayerType}, Dim {item.SpawnNode.m_dimension.DimensionIndex}");
+                info.AppendLine($"Zone {item.SpawnNode.m_zone.Alias}, {item.SpawnNode.LayerType}, Dim {item.SpawnNode.m_dimension.DimensionIndex}");
                 info.AppendLine($"Item Index: {itemIndicesInLevel[item]}");
                 info.AppendLine();
             }

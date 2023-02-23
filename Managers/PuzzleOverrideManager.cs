@@ -95,9 +95,8 @@ namespace ScanPosOverride.Managers
 
                 LG_Zone srcZone = chainedPuzzleInstance.m_sourceArea.m_zone;
                 // alarm info. 
-                chainedPuzzlesInfo.Append($"\nZone {srcZone.Alias}, Layer {srcZone.m_layer.m_type}, Dim {srcZone.DimensionIndex}\n");
+                chainedPuzzlesInfo.Append($"\nZone {srcZone.Alias}, {srcZone.m_layer.m_type}, Dim {srcZone.DimensionIndex}\n");
                 chainedPuzzlesInfo.Append($"Alarm name: {chainedPuzzleInstance.Data.PublicAlarmName}:\n");
-                chainedPuzzlesInfo.Append("----");
 
                 // could be either CP_Bioscan_Core or CP_Cluster_Core
                 for (int i = 0; i < chainedPuzzleInstance.m_chainedPuzzleCores.Count; i++)
