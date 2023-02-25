@@ -30,13 +30,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="JSON\LocalizedTextConverter.cs" />
+    <Compile Include="Managers\ConcurrentClusterCoreManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />
-    <Compile Include="Patches\Patch_CP_PlayerScanner.cs" />
+    <Compile Include="Patches\Patch_CP_Bioscan_Core_OnSyncStateChanged.cs" />
+    <Compile Include="Patches\Patch_CP_Cluster_Core_Activate.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_Setup.cs" />
     <Compile Include="Managers\PuzzleOverrideManager.cs" />
     <Compile Include="Patches\Patch_ChainedPuzzleInstance_SetupMovement.cs" />
     <Compile Include="Patches\Patch_CarryItemPickup_Core_Setup.cs" />
     <Compile Include="Patches\Patch_CP_Cluster_Core_Setup.cs" />
+    <Compile Include="Patches\Patches_CP_Cluster_Hud_ReqItems.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverrideJsonFile.cs" />
     <Compile Include="JSON\Il2CppListConverter.cs" />
     <Compile Include="JSON\Il2CppListConverterFactory.cs" />

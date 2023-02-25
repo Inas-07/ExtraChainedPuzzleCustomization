@@ -7,11 +7,11 @@ namespace ScanPosOverride
 {
     internal static class Logger
     {
-        private static ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource("ScanPosOverride");
+        private static readonly ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource("ScanPosOverride");
 
         public static void Log(string format, params object[] args)
         {
-            Logger.Log(string.Format(format, args));
+            Log(string.Format(format, args));
         }
 
         public static void Log(string str)
@@ -23,7 +23,7 @@ namespace ScanPosOverride
 
         public static void Warning(string format, params object[] args)
         {
-            Logger.Warning(string.Format(format, args));
+            Warning(string.Format(format, args));
         }
 
         public static void Warning(string str)
@@ -35,7 +35,7 @@ namespace ScanPosOverride
 
         public static void Error(string format, params object[] args)
         {
-            Logger.Error(string.Format(format, args));
+            Error(string.Format(format, args));
         }
 
         public static void Error(string str)
@@ -47,7 +47,7 @@ namespace ScanPosOverride
 
         public static void Debug(string format, params object[] args)
         {
-            Logger.Debug(string.Format(format, args));
+            Debug(string.Format(format, args));
         }
 
         public static void Debug(string str)
@@ -60,15 +60,6 @@ namespace ScanPosOverride
         public static void Log(BepInExDebugLogInterpolatedStringHandler logHandler)
         {
             logger.LogDebug(logHandler);
-        }
-    }
-
-    public static class Utils
-    {
-        public static bool TryGetComponent<T>(this GameObject obj, out T comp)
-        {
-            comp = obj.GetComponent<T>();
-            return comp != null;
         }
     }
 }

@@ -1,11 +1,5 @@
-﻿using ChainedPuzzles;
-using GameData;
-using HarmonyLib;
-using LevelGeneration;
+﻿using HarmonyLib;
 using ScanPosOverride.Managers;
-using ScanPosOverride.PuzzleOverrideData;
-using System.Reflection.Metadata.Ecma335;
-using UnityEngine;
 
 namespace ScanPosOverride.Patches
 {

@@ -39,8 +39,6 @@ namespace ScanPosOverride.Managers
 
         public bool AddReqItems(CP_Bioscan_Core puzzle, int itemIndex)
         {
-            // Issue: cannot detect duplicate added items.
-            // User is now responsible for not adding duplicate.
             if (puzzle == null) return false;
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex))

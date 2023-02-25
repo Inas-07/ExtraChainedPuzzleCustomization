@@ -1,6 +1,5 @@
 ﻿using ChainedPuzzles;
 using HarmonyLib;
-using UnityEngine;
 using ScanPosOverride.PuzzleOverrideData;
 using ScanPosOverride.Managers;
 
@@ -11,7 +10,7 @@ namespace ScanPosOverride.Patches
     {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ChainedPuzzleInstance), nameof(ChainedPuzzleInstance.SetupMovement))]
-        private static bool Pre_SetupMovement(ChainedPuzzleInstance __instance, GameObject gameObject)
+        private static bool Pre_SetupMovement(ChainedPuzzleInstance __instance, UnityEngine.GameObject gameObject)
         {
             iChainedPuzzleMovable movingComp = gameObject.GetComponent<iChainedPuzzleMovable>();
             if (movingComp == null || !movingComp.UsingStaticBioscanPoints)

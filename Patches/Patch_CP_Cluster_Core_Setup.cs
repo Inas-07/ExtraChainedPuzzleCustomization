@@ -1,10 +1,8 @@
 ﻿using ChainedPuzzles;
 using GameData;
 using HarmonyLib;
-using LevelGeneration;
 using ScanPosOverride.Managers;
 using ScanPosOverride.PuzzleOverrideData;
-using System.Reflection.Metadata.Ecma335;
 using UnityEngine;
 
 namespace ScanPosOverride.Patches
@@ -81,7 +79,7 @@ namespace ScanPosOverride.Patches
 
             if(puzzleOverride.ConcurrentCluster)
             {
-
+                PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
             }
 
             Logger.Warning("Overriding CP_Cluster_Core!");
