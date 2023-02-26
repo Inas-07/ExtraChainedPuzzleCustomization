@@ -30,10 +30,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="JSON\LocalizedTextConverter.cs" />
-    <Compile Include="Managers\ConcurrentClusterCoreManager.cs" />
+    <Compile Include="Managers\PlayerScannerManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_OnSyncStateChanged.cs" />
-    <Compile Include="Patches\Patch_CP_Cluster_Core_Activate.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_Setup.cs" />
     <Compile Include="Managers\PuzzleOverrideManager.cs" />
     <Compile Include="Patches\Patch_ChainedPuzzleInstance_SetupMovement.cs" />

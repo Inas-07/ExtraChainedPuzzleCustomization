@@ -4,106 +4,158 @@ using Il2CppSystem.Collections.Generic;
 using LevelGeneration;
 using Player;
 using UnityEngine;
-using GTFO.API;
+using ScanPosOverride.Managers;
+
 namespace ScanPosOverride.Patches
 {
     [HarmonyPatch]
     internal class Patch_CP_Bioscan_Core_OnSyncStateChange
     {
-        private static System.Collections.Generic.Dictionary<System.IntPtr, CP_PlayerScanner> cachedScanner = new();
-
-
         // TODO: implementation of T-Scan moving policy && Concurrent cluster scan should both fall into this method.
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
         private static void Post_CP_Bioscan_Core_OnSyncStateChanged(CP_Bioscan_Core __instance, 
-            eBioscanStatus status, List<PlayerAgent> playersInScan, 
-            bool[] reqItemStatus)
+            eBioscanStatus status, List<PlayerAgent> playersInScan)
         {
-            if (!__instance.IsMovable || status != eBioscanStatus.Scanning) return;
+            bool IsConcurrentCluster = PlayerScannerManager.Current.IsConcurrentCluster(__instance);
 
-            CP_PlayerScanner scanner;
-            if(!cachedScanner.ContainsKey(__instance.Pointer))
+            Logger.Debug($"IsConcurrentCluster: {IsConcurrentCluster}, IsMovable: {__instance.IsMovable}");
+
+            if (status != eBioscanStatus.Scanning)
             {
-                scanner = __instance.m_playerScanner.TryCast<CP_PlayerScanner>();
-                if(scanner == null)
+                if (IsConcurrentCluster)
                 {
-                    Logger.Error("Failed to cast to CP_PlayerScanner!");
+                    PlayerScannerManager.Current.ConcurrentClusterShouldProgress(__instance, false);
                 }
 
-                // will add null scanner
-                cachedScanner.Add(__instance.Pointer, scanner);
-            }
-            else
-            {
-                scanner = cachedScanner[__instance.Pointer];
+                return;
             }
 
-            if(scanner == null)
+            // We only handle Movable or Concurrent cluster in this method
+            if (!__instance.IsMovable && !IsConcurrentCluster) return;
+
+            bool ScanShouldProgress = true;
+            CP_PlayerScanner scanner = PlayerScannerManager.Current.GetCacheScanner(__instance);
+
+            if (scanner == null)
             {
                 Logger.Error("Null CP_PlayerScanner");
                 return;
             }
 
+            // =========== (original) scan speed examination =========== 
             int playersInScanCount = playersInScan.Count;
             var playerAgentsInLevel = PlayerManager.PlayerAgentsInLevel;
 
             float scanSpeed = 0.0f;
             if (__instance.m_playerScanner.ScanPlayersRequired == PlayerRequirement.None)
             {
-                scanSpeed = playersInScanCount <= 0 ? 0.0f : scanner.m_scanSpeeds[playersInScanCount - 1];
+                if(IsConcurrentCluster)
+                {
+                    var originalScanSpeeds = PlayerScannerManager.Current.GetOriginalScanSpeed(__instance);
+                    scanSpeed = playersInScanCount <= 0 ? 0.0f : originalScanSpeeds[playersInScanCount - 1];
+                }
+                else
+                {
+                    scanSpeed = playersInScanCount <= 0 ? 0.0f : scanner.m_scanSpeeds[playersInScanCount - 1];
+                }
             }
+
             else if (scanner.m_playerRequirement == PlayerRequirement.All && playersInScanCount == playerAgentsInLevel.Count
                 || (scanner.m_playerRequirement == PlayerRequirement.Solo && playersInScanCount == 1))
             {
-                scanSpeed = scanner.m_scanSpeeds[0];
+                if (IsConcurrentCluster)
+                {
+                    var originalScanSpeeds = PlayerScannerManager.Current.GetOriginalScanSpeed(__instance);
+                    scanSpeed = originalScanSpeeds[0];
+                }
+                else
+                {
+                    scanSpeed = scanner.m_scanSpeeds[playersInScanCount - 1];
+                }
             }
 
             bool hasPositiveScanSpeed = scanSpeed > 0.0f;
-            bool ScanShouldProgress = true;
-
-            if (!hasPositiveScanSpeed)
+            ScanShouldProgress = hasPositiveScanSpeed;
+            if (hasPositiveScanSpeed)
             {
-                ScanShouldProgress = false;
+                // examine req item (for both concurrent cluster and T-scan)
+                // I wonder if req item examination is required for concurrent cluster... 
+                // but anyway examination is done on both now.
+                if (scanner.m_reqItemsEnabled)
+                {
+                    for (int index = 0; index < scanner.m_reqItems.Length; ++index)
+                    {
+                        // NOTE: Do not use `reqItemStatus` - buggy from Il2Cpp
+                        Vector3 vector3_2 = Vector3.zero;
+                        if (scanner.m_reqItems[index].PickupItemStatus == ePickupItemStatus.PlacedInLevel)
+                            vector3_2 = scanner.m_reqItems[index].transform.position;
+                        else if (scanner.m_reqItems[index].PickupItemStatus == ePickupItemStatus.PickedUp)
+                        {
+                            if (scanner.m_reqItems[index].PickedUpByPlayer != null)
+                                vector3_2 = scanner.m_reqItems[index].PickedUpByPlayer.Position;
+                            else
+                                Debug.LogError("Playerscanner is looking for an item that has ePickupItemStatus.PickedUp but null player, how come!?");
+                        }
+                        Vector3 vec = scanner.transform.position - vector3_2;
+                        if (vec.sqrMagnitude >= scanner.m_scanRadiusSqr)
+                        {
+                            ScanShouldProgress = false;
+                            break;
+                        }
+                    }
+                }
             }
 
-            else if (scanner.m_reqItemsEnabled) 
+            // Handle Concurrent cluster only when ScanShouldProgress == true for this scan
+            if (IsConcurrentCluster)
             {
-                for (int index = 0; index < scanner.m_reqItems.Length; ++index)
+                if(ScanShouldProgress)
                 {
-                    // NOTE: Do not use `reqItemStatus` - buggy from Il2Cpp
-                    Vector3 vector3_2 = Vector3.zero;
-                    if (scanner.m_reqItems[index].PickupItemStatus == ePickupItemStatus.PlacedInLevel)
-                        vector3_2 = scanner.m_reqItems[index].transform.position;
-                    else if (scanner.m_reqItems[index].PickupItemStatus == ePickupItemStatus.PickedUp)
-                    {
-                        if (scanner.m_reqItems[index].PickedUpByPlayer != null)
-                            vector3_2 = scanner.m_reqItems[index].PickedUpByPlayer.Position;
-                        else
-                            Debug.LogError("Playerscanner is looking for an item that has ePickupItemStatus.PickedUp but null player, how come!?");
-                    }
-                    Vector3 vec = scanner.transform.position - vector3_2;
-                    if (vec.sqrMagnitude >= scanner.m_scanRadiusSqr)
-                    {
-                        ScanShouldProgress = false;
-                        break;
-                    }
+                    ScanShouldProgress = PlayerScannerManager.Current.ConcurrentClusterShouldProgress(__instance, true);
+                }
+                else
+                {
+                    PlayerScannerManager.Current.ConcurrentClusterShouldProgress(__instance, false);
                 }
             }
 
             if (ScanShouldProgress)
             {
-                __instance.m_movingComp.ResumeMovement();
+                if(IsConcurrentCluster)
+                {
+                    var originalScanSpeeds = PlayerScannerManager.Current.GetOriginalScanSpeed(__instance);
+                    for(int i = 0; i < 4; i++)
+                    {
+                        scanner.m_scanSpeeds[i] = originalScanSpeeds[i];
+                    }
+                }
+
+                if (__instance.IsMovable)
+                {
+                    __instance.m_movingComp.ResumeMovement();
+                }
             }
             else
             {
-                __instance.m_movingComp.PauseMovement();
+                if (IsConcurrentCluster)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        scanner.m_scanSpeeds[i] = 0.0f;
+                    }
+                }
+
+                if (__instance.IsMovable)
+                {
+                    __instance.m_movingComp.PauseMovement();
+                }
             }
         }
 
         static Patch_CP_Bioscan_Core_OnSyncStateChange()
         {
-            LevelAPI.OnLevelCleanup += cachedScanner.Clear;
+
         }
     }
 }

@@ -77,11 +77,6 @@ namespace ScanPosOverride.Patches
                 PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
 
-            if(puzzleOverride.ConcurrentCluster)
-            {
-                PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
-            }
-
             Logger.Warning("Overriding CP_Cluster_Core!");
         }
 
@@ -127,6 +122,15 @@ namespace ScanPosOverride.Patches
                     // Lazy. No impl.
                 }
             }
+
+            uint overrideIndex = PuzzleOverrideManager.Current.GetClusterCoreOverrideIndex(__instance);
+            if (overrideIndex == 0) return;
+
+            PuzzleOverride overrideData = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
+            if(overrideData == null || overrideData.ConcurrentCluster == false) return;
+
+            //PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
+            //Logger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
         }
     }
 }

@@ -39,14 +39,12 @@ namespace ScanPosOverride.Managers
                 bioscanCore2Index.Add(__instance, allotedIndex);
                 bioscanCoreIntPtr2Index.Add(__instance.Pointer, allotedIndex);
                 index2BioscanCore.Add(allotedIndex, __instance);
+                return allotedIndex;
             }
             else
             {
-                Logger.Error("Duplicate CP_Bioscan_Core registration, exm?");
-                return 0u;
+                return GetBioscanCoreOverrideIndex(__instance);
             }
-
-            return allotedIndex;
         }
 
         public uint Register(CP_Cluster_Core __instance)
@@ -60,14 +58,12 @@ namespace ScanPosOverride.Managers
                 clusterCore2Index.Add(__instance, allotedIndex);
                 clusterCoreIntPtr2Index.Add(__instance.Pointer, allotedIndex);
                 index2ClusterCore.Add(allotedIndex, __instance);
+               return allotedIndex;
             }
             else
             {
-                Logger.Error("Duplicate CP_Cluster_Core registration, exm?");
-                return 0u;
+                return GetClusterCoreOverrideIndex(__instance);
             }
-
-            return allotedIndex;
         }
 
         // output by chained puzzle instance.
