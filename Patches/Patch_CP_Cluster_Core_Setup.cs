@@ -129,8 +129,8 @@ namespace ScanPosOverride.Patches
             PuzzleOverride overrideData = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
             if(overrideData == null || overrideData.ConcurrentCluster == false) return;
 
-            //PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
-            //Logger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
+            PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
+            Logger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
         }
     }
 }

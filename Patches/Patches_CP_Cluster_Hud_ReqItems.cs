@@ -5,6 +5,7 @@
 //using GTFO.API;
 //using System.Linq;
 //using LevelGeneration;
+//using BepInEx.Unity.IL2CPP.Utils.Collections;
 
 //namespace ScanPosOverride.Patches
 //{
@@ -32,7 +33,7 @@
 //            CP_Cluster_Core ClusterOwner = __instance.Owner.TryCast<CP_Cluster_Core>();
 //            if (ClusterOwner == null) return;
 
-//            if(__instance.m_hud == null)
+//            if (__instance.m_hud == null)
 //            {
 //                Logger.Error("replacement Cluster_hud is null.");
 //                return;
@@ -44,21 +45,21 @@
 //        // immediately invoked before CP_Bioscan_Core.AddRequiredItems ends.
 //        // this method is unimplemented on 10cc side
 //        // ISSUE: WHY THIS METHOD IS INVOKED BEFORE GAME STARTUP COMPLETE?
-//        [HarmonyPostfix]
+//        [HarmonyPrefix]
 //        [HarmonyPatch(typeof(CP_Cluster_Hud), nameof(CP_Cluster_Hud.SetupRequiredItems))]
-//        private static void Post_CP_Cluster_Hud_SetupRequiredItems(CP_Cluster_Hud __instance, bool enabled, Il2CppStringArray names)
+//        private static bool Pre_CP_Cluster_Hud_SetupRequiredItems(CP_Cluster_Hud __instance, bool enabled, Il2CppStringArray names)
 //        {
 //            if (AddRequiredItems_LastAddedClusterChildIndex.Count < 1)
 //            {
 //                Logger.Error("CP_Cluster_Hud_SetupRequiredItems: invoked, but no queued child index.");
-//                return;
+//                return false;
 //            }
 
 //            int puzzleIndex = AddRequiredItems_LastAddedClusterChildIndex.Dequeue();
 //            if (puzzleIndex < 0 || puzzleIndex >= __instance.m_clusterSize)
 //            {
 //                Logger.Error($"Invalid queued child puzzle index {puzzleIndex}");
-//                return;
+//                return false;
 //            }
 
 //            Logger.Warning($"CP_Cluster_Hud.SetupRequiredItems, LastAddedClusterChildIndex: {puzzleIndex}");
@@ -81,6 +82,8 @@
 
 //            childrenReqItemEnabled[puzzleIndex] = enabled;
 //            childrenReqItemNames[puzzleIndex] = names;
+
+//            return false;
 //        }
 
 //        [HarmonyPrefix]
@@ -112,7 +115,7 @@
 //        {
 //            if (!clustersChildrenReqItemsStatus.ContainsKey(__instance.Pointer)) return;
 
-//            if(!clustersChildrenReqItemEnabled.ContainsKey(__instance.Pointer) || !clustersChildrenReqItemNames.ContainsKey(__instance.Pointer))
+//            if (!clustersChildrenReqItemEnabled.ContainsKey(__instance.Pointer) || !clustersChildrenReqItemNames.ContainsKey(__instance.Pointer))
 //            {
 //                Logger.Error("CP_Cluster_Hud_UpdateDataFor: Found registered reqItemStatus but ReqItemEnabled or ReqItemNames is missing!");
 //                return;
@@ -140,3 +143,45 @@
 //        }
 //    }
 //}
+
+////// immediately invoked before CP_Bioscan_Core.AddRequiredItems ends.
+////// this method is unimplemented on 10cc side
+////// ISSUE: WHY THIS METHOD IS INVOKED BEFORE GAME STARTUP COMPLETE?
+////[HarmonyPostfix]
+////[HarmonyPatch(typeof(CP_Cluster_Hud), nameof(CP_Cluster_Hud.SetupRequiredItems))]
+////private static void Post_CP_Cluster_Hud_SetupRequiredItems(CP_Cluster_Hud __instance, bool enabled, Il2CppStringArray names)
+////{
+////    if (AddRequiredItems_LastAddedClusterChildIndex.Count < 1)
+////    {
+////        Logger.Error("CP_Cluster_Hud_SetupRequiredItems: invoked, but no queued child index.");
+////        return;
+////    }
+
+////    int puzzleIndex = AddRequiredItems_LastAddedClusterChildIndex.Dequeue();
+////    if (puzzleIndex < 0 || puzzleIndex >= __instance.m_clusterSize)
+////    {
+////        Logger.Error($"Invalid queued child puzzle index {puzzleIndex}");
+////        return;
+////    }
+
+////    Logger.Warning($"CP_Cluster_Hud.SetupRequiredItems, LastAddedClusterChildIndex: {puzzleIndex}");
+
+////    List<bool> childrenReqItemEnabled;
+////    List<Il2CppStringArray> childrenReqItemNames;
+////    if (!clustersChildrenReqItemNames.ContainsKey(__instance.Pointer))
+////    {
+////        childrenReqItemEnabled = Enumerable.Repeat(false, __instance.m_clusterSize).ToList();
+////        childrenReqItemNames = Enumerable.Repeat<Il2CppStringArray>(null, __instance.m_clusterSize).ToList();
+
+////        clustersChildrenReqItemEnabled.Add(__instance.Pointer, childrenReqItemEnabled);
+////        clustersChildrenReqItemNames.Add(__instance.Pointer, childrenReqItemNames);
+////    }
+////    else
+////    {
+////        childrenReqItemEnabled = clustersChildrenReqItemEnabled[__instance.Pointer];
+////        childrenReqItemNames = clustersChildrenReqItemNames[__instance.Pointer];
+////    }
+
+////    childrenReqItemEnabled[puzzleIndex] = enabled;
+////    childrenReqItemNames[puzzleIndex] = names;
+////}
