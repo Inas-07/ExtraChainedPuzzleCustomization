@@ -14,11 +14,10 @@ namespace ScanPosOverride.Patches
         // TODO: implementation of T-Scan moving policy && Concurrent cluster scan should both fall into this method.
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
-        private static void Post_CP_Bioscan_Core_OnSyncStateChanged(CP_Bioscan_Core __instance, 
+        private static void Post_CP_Bioscan_Core_OnSyncStateChanged(CP_Bioscan_Core __instance, float progress,
             eBioscanStatus status, List<PlayerAgent> playersInScan)
         {
             bool IsConcurrentCluster = PlayerScannerManager.Current.IsConcurrentCluster(__instance);
-
 
             if (status != eBioscanStatus.Scanning)
             {
@@ -149,6 +148,11 @@ namespace ScanPosOverride.Patches
                 {
                     __instance.m_movingComp.ResumeMovement();
                 }
+
+                if(scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_scanSpeeds[0] == 0.0)
+                {
+                    scanner.m_scanSpeeds[0] = scanSpeed;
+                }
             }
             else
             {
@@ -163,6 +167,11 @@ namespace ScanPosOverride.Patches
                 if (__instance.IsMovable)
                 {
                     __instance.m_movingComp.PauseMovement();
+                }
+
+                if (scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_scanSpeeds[0] != 0.0)
+                {
+                    scanner.m_scanSpeeds[0] = scanSpeed;
                 }
             }
         }

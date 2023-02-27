@@ -215,12 +215,17 @@ namespace ScanPosOverride.Managers
         public void Clear()
         {
             ConcurrentClusterCores.Clear();
+            ConcurrentClusterChildCores.Clear();
             ConcurrentScanClusterParents.Clear();
             ConcurrentClusterChildScanState.Clear();
-            ConcurrentClusterChildCores.Clear();
             OriginalClusterScanSpeeds.Clear();
             Scanners.Clear();
-            ConcurrentClusterStateMutex.Dispose();
+
+            if(ConcurrentClusterStateMutex != null)
+            {
+                ConcurrentClusterStateMutex.Dispose();
+            }
+
             ConcurrentClusterStateMutex = null;
         }
 
