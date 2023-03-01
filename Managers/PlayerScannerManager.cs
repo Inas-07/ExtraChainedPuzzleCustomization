@@ -125,6 +125,8 @@ namespace ScanPosOverride.Managers
             }
         }
 
+        // Note: the cached scan speed here cannot replaced by GetCacheScanner.m_scanSpeed!
+        //       We modify the latter to do some bug fix && implement ConcurrentCluster!
         internal float[] GetCacheOriginalScanSpeed(CP_Bioscan_Core core)
         {
             if(IsConcurrentCluster(core))
