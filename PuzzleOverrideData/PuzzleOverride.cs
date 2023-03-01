@@ -4,7 +4,7 @@ namespace ScanPosOverride.PuzzleOverrideData
 {
     internal sealed class PuzzleOverride
     {
-        public byte Index { get; set; }
+        public uint Index { get; set; }
 
         public Vec3 Position { get; set; } = new Vec3();
 

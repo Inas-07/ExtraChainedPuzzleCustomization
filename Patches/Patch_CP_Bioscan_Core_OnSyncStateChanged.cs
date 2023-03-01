@@ -67,7 +67,7 @@ namespace ScanPosOverride.Patches
             {
                 if(IsConcurrentCluster)
                 {
-                    var originalScanSpeeds = PlayerScannerManager.Current.GetOriginalScanSpeed(__instance);
+                    var originalScanSpeeds = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
                     scanSpeed = playersInScanCount <= 0 ? 0.0f : originalScanSpeeds[playersInScanCount - 1];
                 }
                 else
@@ -81,7 +81,7 @@ namespace ScanPosOverride.Patches
             {
                 if (IsConcurrentCluster)
                 {
-                    var originalScanSpeeds = PlayerScannerManager.Current.GetOriginalScanSpeed(__instance);
+                    var originalScanSpeeds = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
                     scanSpeed = originalScanSpeeds[0];
                 }
                 else
@@ -149,9 +149,10 @@ namespace ScanPosOverride.Patches
                     __instance.m_movingComp.ResumeMovement();
                 }
 
-                if(scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_scanSpeeds[0] == 0.0)
+                if(scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_reqItemsEnabled)
                 {
-                    scanner.m_scanSpeeds[0] = scanSpeed;
+                    float[] reqItemScanSpeed = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
+                    scanner.m_scanSpeeds[0] = playersInScanCount > 0 ? reqItemScanSpeed[playersInScanCount - 1] : 0.0f;
                 }
             }
             else
@@ -169,9 +170,12 @@ namespace ScanPosOverride.Patches
                     __instance.m_movingComp.PauseMovement();
                 }
 
-                if (scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_scanSpeeds[0] != 0.0)
+                if (scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_reqItemsEnabled)
                 {
-                    scanner.m_scanSpeeds[0] = scanSpeed;
+                    // cache original scan speed
+                    // Concurrent Cluster scan speed is also handled in this method
+                    PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
+                    scanner.m_scanSpeeds[0] = 0.0f;
                 }
             }
         }

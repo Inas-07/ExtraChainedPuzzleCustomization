@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GTFO.API;
 using System.Linq;
 using System.Threading;
+using System.Runtime.CompilerServices;
 
 namespace ScanPosOverride.Managers
 {
@@ -25,6 +26,10 @@ namespace ScanPosOverride.Managers
         
         // (cached) scanners for relevant CP_Bioscan_Core
         private Dictionary<System.IntPtr, CP_PlayerScanner> Scanners = new();
+
+        private Dictionary<System.IntPtr, float[]> OriginalScanSpeed = new();
+
+        private static readonly float[] ZERO_SCAN_SPEED = new float[4] { 0.0f, 0.0f, 0.0f, 0.0f } ;
 
         // invoked after core.Setup()
         internal bool RegisterConcurrentCluster(CP_Cluster_Core core)
@@ -120,12 +125,36 @@ namespace ScanPosOverride.Managers
             }
         }
 
-        internal float[] GetOriginalScanSpeed(CP_Bioscan_Core core)
+        internal float[] GetCacheOriginalScanSpeed(CP_Bioscan_Core core)
         {
-            if (!ConcurrentScanClusterParents.ContainsKey(core.Pointer)) return new float[4] { 0.0f, 0.0f, 0.0f, 0.0f };
-            CP_Cluster_Core parent = ConcurrentScanClusterParents[core.Pointer];
+            if(IsConcurrentCluster(core))
+            {
+                if (!ConcurrentScanClusterParents.ContainsKey(core.Pointer)) return ZERO_SCAN_SPEED;
+                CP_Cluster_Core parent = ConcurrentScanClusterParents[core.Pointer];
 
-            return OriginalClusterScanSpeeds.ContainsKey(parent) ? OriginalClusterScanSpeeds[parent] : new float[4] { 0.0f, 0.0f, 0.0f, 0.0f };
+                return OriginalClusterScanSpeeds.ContainsKey(parent) ? OriginalClusterScanSpeeds[parent] : ZERO_SCAN_SPEED;
+            }
+
+            else
+            {
+                if(OriginalScanSpeed.ContainsKey(core.Pointer)) return OriginalScanSpeed[core.Pointer];
+
+                CP_PlayerScanner scanner = GetCacheScanner(core);
+                if(scanner == null)
+                {
+                    Logger.Error($"GetCacheOriginalScanSpeed: cannot get scanner for this CP_Bioscan_Core");
+                    return ZERO_SCAN_SPEED;
+                }
+
+                float[] scanSpeeds = new float[4];
+                for(int i = 0; i < 4; i++)
+                {
+                    scanSpeeds[i] = scanner.m_scanSpeeds[i];
+                }
+
+                OriginalScanSpeed.Add(core.Pointer, scanSpeeds);
+                return scanSpeeds;
+            }
         }
 
         internal CP_Cluster_Core GetParentClusterCore(CP_Bioscan_Core core) => ConcurrentScanClusterParents.ContainsKey(core.Pointer) ? ConcurrentScanClusterParents[core.Pointer] : null;
@@ -220,8 +249,9 @@ namespace ScanPosOverride.Managers
             ConcurrentClusterChildScanState.Clear();
             OriginalClusterScanSpeeds.Clear();
             Scanners.Clear();
+            OriginalScanSpeed.Clear();
 
-            if(ConcurrentClusterStateMutex != null)
+            if (ConcurrentClusterStateMutex != null)
             {
                 ConcurrentClusterStateMutex.Dispose();
             }
