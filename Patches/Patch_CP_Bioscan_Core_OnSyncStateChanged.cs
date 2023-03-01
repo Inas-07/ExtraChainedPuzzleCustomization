@@ -11,7 +11,8 @@ namespace ScanPosOverride.Patches
     [HarmonyPatch]
     internal class Patch_CP_Bioscan_Core_OnSyncStateChange
     {
-        // TODO: implementation of T-Scan moving policy && Concurrent cluster scan should both fall into this method.
+        // implementation of T-Scan moving policy && Concurrent cluster scan both fall into this method.
+        // maintaining this patch could make you insane 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
         private static void Post_CP_Bioscan_Core_OnSyncStateChanged(CP_Bioscan_Core __instance, float progress,
@@ -44,12 +45,8 @@ namespace ScanPosOverride.Patches
                 return;
             }
 
-            // We only handle Movable or Concurrent cluster in this method
-            if (!__instance.IsMovable && !IsConcurrentCluster) return;
+            if (!__instance.IsMovable && !IsConcurrentCluster) return;            
             
-            //Logger.Debug($"IsConcurrentCluster: {IsConcurrentCluster}, IsMovable: {__instance.IsMovable}");
-
-            bool ScanShouldProgress = true;
             CP_PlayerScanner scanner = PlayerScannerManager.Current.GetCacheScanner(__instance);
 
             if (scanner == null)
@@ -63,36 +60,22 @@ namespace ScanPosOverride.Patches
             var playerAgentsInLevel = PlayerManager.PlayerAgentsInLevel;
 
             float scanSpeed = 0.0f;
+            float[] originalScanSpeeds = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
             if (__instance.m_playerScanner.ScanPlayersRequired == PlayerRequirement.None)
             {
-                if(IsConcurrentCluster)
-                {
-                    var originalScanSpeeds = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
-                    scanSpeed = playersInScanCount <= 0 ? 0.0f : originalScanSpeeds[playersInScanCount - 1];
-                }
-                else
-                {
-                    scanSpeed = playersInScanCount <= 0 ? 0.0f : scanner.m_scanSpeeds[playersInScanCount - 1];
-                }
+                // handle concurrent cluster as well
+                scanSpeed = playersInScanCount <= 0 ? 0.0f : originalScanSpeeds[playersInScanCount - 1];
             }
 
             else if (scanner.m_playerRequirement == PlayerRequirement.All && playersInScanCount == playerAgentsInLevel.Count
                 || (scanner.m_playerRequirement == PlayerRequirement.Solo && playersInScanCount == 1))
             {
-                if (IsConcurrentCluster)
-                {
-                    var originalScanSpeeds = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
-                    scanSpeed = originalScanSpeeds[0];
-                }
-                else
-                {
-                    scanSpeed = scanner.m_scanSpeeds[playersInScanCount - 1];
-                }
+                scanSpeed = originalScanSpeeds[0];
             }
 
-            bool hasPositiveScanSpeed = scanSpeed > 0.0f;
-            ScanShouldProgress = hasPositiveScanSpeed;
-            if (hasPositiveScanSpeed)
+            bool ScanShouldProgress = scanSpeed > 0.0f;
+            // req item check
+            if (ScanShouldProgress)
             {
                 // examine req item (for both concurrent cluster and T-scan)
                 // I wonder if req item examination is required for concurrent cluster... 
@@ -151,8 +134,7 @@ namespace ScanPosOverride.Patches
 
                 if(scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_reqItemsEnabled)
                 {
-                    float[] reqItemScanSpeed = PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
-                    scanner.m_scanSpeeds[0] = playersInScanCount > 0 ? reqItemScanSpeed[playersInScanCount - 1] : 0.0f;
+                    scanner.m_scanSpeeds[0] = playersInScanCount > 0 ? originalScanSpeeds[playersInScanCount - 1] : 0.0f;
                 }
             }
             else
@@ -176,6 +158,8 @@ namespace ScanPosOverride.Patches
                     // Concurrent Cluster scan speed is also handled in this method
                     PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
                     scanner.m_scanSpeeds[0] = 0.0f;
+
+                    Logger.Debug($"zeroed scan speed");
                 }
             }
         }
