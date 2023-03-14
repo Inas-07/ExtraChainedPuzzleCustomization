@@ -105,7 +105,7 @@ namespace ScanPosOverride.Patches
 
             // no spline for T scan
             // prolly work for "clustered T-scan" as well?
-            if (__instance.m_movingComp != null && __instance.m_movingComp.IsMoveConfigured)
+            if (puzzleOverride.HideSpline ||  __instance.m_movingComp != null && __instance.m_movingComp.IsMoveConfigured)
             {
                 revealWithHoloPath = false;
             }

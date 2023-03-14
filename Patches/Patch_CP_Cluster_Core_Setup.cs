@@ -77,6 +77,13 @@ namespace ScanPosOverride.Patches
                 PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
 
+            // no spline for T scan
+            // prolly work for "clustered T-scan" as well?
+            if (puzzleOverride.HideSpline)
+            {
+                revealWithHoloPath = false;
+            }
+
             Logger.Warning("Overriding CP_Cluster_Core!");
         }
 

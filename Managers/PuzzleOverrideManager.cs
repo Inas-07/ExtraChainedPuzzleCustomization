@@ -172,7 +172,6 @@ namespace ScanPosOverride.Managers
             clusterCoreIntPtr2Index.Clear();
             index2BioscanCore.Clear();
             index2ClusterCore.Clear();
-            Logger.Warning("Cleared PuzzleOverrideManager");
         }
 
         private PuzzleOverrideManager() { }
