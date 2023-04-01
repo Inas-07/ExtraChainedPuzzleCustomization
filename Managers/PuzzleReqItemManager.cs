@@ -39,7 +39,7 @@ namespace ScanPosOverride.Managers
 
         public bool AddReqItems(CP_Bioscan_Core puzzle, int itemIndex)
         {
-            if (puzzle == null) return false;
+            if (puzzle == null || itemIndex == 0u) return false;
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
             {
@@ -57,7 +57,7 @@ namespace ScanPosOverride.Managers
         {
             // Issue: cannot detect duplicate added items.
             // User is now responsible for not adding duplicate.
-            if (puzzle == null) return false;
+            if (puzzle == null || itemIndex == 0u) return false;
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
             {
@@ -98,7 +98,7 @@ namespace ScanPosOverride.Managers
         {
             if (puzzle == null) return;
 
-            if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
+            if (!BigPickupItemsInLevel.ContainsKey(itemIndex) && itemIndex != 0u)
             {
                 Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
                 return;
@@ -115,7 +115,7 @@ namespace ScanPosOverride.Managers
         {
             if (puzzle == null) return;
 
-            if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
+            if (!BigPickupItemsInLevel.ContainsKey(itemIndex) && itemIndex != 0u)
             {
                 Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
                 return;

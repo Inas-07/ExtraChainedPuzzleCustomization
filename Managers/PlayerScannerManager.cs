@@ -212,7 +212,7 @@ namespace ScanPosOverride.Managers
                     ScanShouldProgress = false;
                 }
 
-                Logger.Debug($"Concurrent cluster: {clusterParent.m_amountOfPuzzles} children, {childScanState.Count} children should progress.");
+                //Logger.Debug($"Concurrent cluster: {clusterParent.m_amountOfPuzzles} children, {childScanState.Count} children should progress.");
 
                 // Release the Mutex.
                 ConcurrentClusterStateMutex.ReleaseMutex();

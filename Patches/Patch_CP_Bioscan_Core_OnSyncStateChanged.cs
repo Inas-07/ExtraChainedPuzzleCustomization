@@ -42,10 +42,15 @@ namespace ScanPosOverride.Patches
                     }
                 }
 
+                if (__instance.m_reqItemsEnabled)
+                {
+                    __instance.m_graphics.SetColorMode(__instance.m_hasAlarm ? eChainedPuzzleGraphicsColorMode.Alarm_Waiting : eChainedPuzzleGraphicsColorMode.Waiting);
+                }
+
                 return;
             }
 
-            if (!__instance.IsMovable && !IsConcurrentCluster) return;            
+            if (!__instance.IsMovable && !IsConcurrentCluster && !__instance.m_reqItemsEnabled) return;            
             
             CP_PlayerScanner scanner = PlayerScannerManager.Current.GetCacheScanner(__instance);
 
@@ -132,9 +137,14 @@ namespace ScanPosOverride.Patches
                     __instance.m_movingComp.ResumeMovement();
                 }
 
-                if(scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_reqItemsEnabled)
+                if(scanner.m_reqItemsEnabled)
                 {
-                    scanner.m_scanSpeeds[0] = playersInScanCount > 0 ? originalScanSpeeds[playersInScanCount - 1] : 0.0f;
+                    if (scanner.m_playerRequirement == PlayerRequirement.None)
+                    {
+                        scanner.m_scanSpeeds[0] = playersInScanCount > 0 ? originalScanSpeeds[playersInScanCount - 1] : 0.0f;
+                    }
+
+                    __instance.m_graphics.SetColorMode(__instance.m_hasAlarm ? eChainedPuzzleGraphicsColorMode.Alarm_Active : eChainedPuzzleGraphicsColorMode.Active);
                 }
             }
             else
@@ -152,14 +162,17 @@ namespace ScanPosOverride.Patches
                     __instance.m_movingComp.PauseMovement();
                 }
 
-                if (scanner.m_playerRequirement == PlayerRequirement.None && scanner.m_reqItemsEnabled)
+                if(scanner.m_reqItemsEnabled)
                 {
-                    // cache original scan speed
-                    // Concurrent Cluster scan speed is also handled in this method
-                    PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
-                    scanner.m_scanSpeeds[0] = 0.0f;
+                    if (scanner.m_playerRequirement == PlayerRequirement.None)
+                    {
+                        // cache original scan speed
+                        // Concurrent Cluster scan speed is also handled in this method
+                        PlayerScannerManager.Current.GetCacheOriginalScanSpeed(__instance);
+                        scanner.m_scanSpeeds[0] = 0.0f;
+                    }
 
-                    Logger.Debug($"zeroed scan speed");
+                    __instance.m_graphics.SetColorMode(__instance.m_hasAlarm ? eChainedPuzzleGraphicsColorMode.Alarm_Waiting : eChainedPuzzleGraphicsColorMode.Waiting);
                 }
             }
         }

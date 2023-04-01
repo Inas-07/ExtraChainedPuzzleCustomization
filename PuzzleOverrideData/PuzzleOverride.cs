@@ -16,7 +16,7 @@ namespace ScanPosOverride.PuzzleOverrideData
         
         public List<Vec3> TPositions { get; set; } = new List<Vec3>();
 
-        public List<int> RequiredItemsIndices { get; set; } = new();
+        public List<int> RequiredItemsIndices { get; set; } = new() { 0 };
 
         public List<WardenObjectiveEventData> EventsOnPuzzleSolved { get; set; } = new();
     }
