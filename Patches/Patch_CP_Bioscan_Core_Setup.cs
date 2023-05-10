@@ -14,7 +14,7 @@ namespace ScanPosOverride.Patches
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.Setup))]
         private static void Pre_CP_Bioscan_Core_Setup(CP_Bioscan_Core __instance,
-            int puzzleIndex, iChainedPuzzleOwner owner, ref Vector3 prevPuzzlePos, ref bool revealWithHoloPath)
+            int puzzleIndex, iChainedPuzzleOwner owner, ref Vector3 prevPuzzlePos, ref bool revealWithHoloPath, ref bool onlyShowHUDWhenPlayerIsClose)
         {
             // owner could either be ChainedPuzzleInstance (single scan), or CP_Cluster_Core (clustered scan).
             ChainedPuzzleInstance scanOwner = owner.TryCast<ChainedPuzzleInstance>();
@@ -70,11 +70,16 @@ namespace ScanPosOverride.Patches
 
                 prevPuzzlePos = clusterOwner.transform.position;
 
-
                 scanOwner = clusterOwner.m_owner.TryCast<ChainedPuzzleInstance>();
                 if(scanOwner == null)
                 {
                     Logger.Error("Failed to cast clusterOwner.m_owner to ChainedPuzzleInstance");
+                    return;
+                }
+
+                if(scanOwner.Data.OnlyShowHUDWhenPlayerIsClose == true)
+                {
+                    onlyShowHUDWhenPlayerIsClose = true;
                 }
             }
 
