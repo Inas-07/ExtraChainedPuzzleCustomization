@@ -29,7 +29,7 @@ namespace ScanPosOverride.Patches
                         var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
                         if(clusterParent == null)
                         {
-                            Logger.Error("Cannot find parent cluster core! The concurrent cluster may fail!");
+                            ScanPosOverrideLogger.Error("Cannot find parent cluster core! The concurrent cluster may fail!");
                         }
                         else
                         {
@@ -56,7 +56,7 @@ namespace ScanPosOverride.Patches
 
             if (scanner == null)
             {
-                Logger.Error("Null CP_PlayerScanner");
+                ScanPosOverrideLogger.Error("Null CP_PlayerScanner");
                 return;
             }
 
@@ -127,7 +127,7 @@ namespace ScanPosOverride.Patches
                 if(IsConcurrentCluster)
                 {
                     var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                    if (clusterParent == null) Logger.Error("null clusterParent");
+                    if (clusterParent == null) ScanPosOverrideLogger.Error("null clusterParent");
 
                     PlayerScannerManager.Current.RestoreConcurrentClusterScanSpeed(clusterParent);
                 }
@@ -152,7 +152,7 @@ namespace ScanPosOverride.Patches
                 if (IsConcurrentCluster)
                 {
                     var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                    if (clusterParent == null) Logger.Error("null clusterParent");
+                    if (clusterParent == null) ScanPosOverrideLogger.Error("null clusterParent");
 
                     PlayerScannerManager.Current.ZeroConcurrentClusterScanSpeed(clusterParent);
                 }

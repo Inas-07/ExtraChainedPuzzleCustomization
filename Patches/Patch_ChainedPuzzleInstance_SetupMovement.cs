@@ -18,12 +18,13 @@ namespace ScanPosOverride.Patches
                 return true;
             }
 
+            CP_BasicMovable TComponent = movingComp.Cast<CP_BasicMovable>();
             iChainedPuzzleCore coreComp = gameObject.GetComponent<iChainedPuzzleCore>();
             CP_Bioscan_Core core = coreComp.TryCast<CP_Bioscan_Core>();
 
             if(core == null)
             {
-                Logger.Error("Pre_SetupMovement: iChainedPuzzleCore -> CP_Bioscan_Core failed");
+                ScanPosOverrideLogger.Error("Pre_SetupMovement: iChainedPuzzleCore -> CP_Bioscan_Core failed");
                 return true;
             }
 
@@ -31,26 +32,26 @@ namespace ScanPosOverride.Patches
 
             if (TScanPuzzleIndex == 0)
             {
-                Logger.Error("Did not find registered movable override for this movable scan.");
+                ScanPosOverrideLogger.Error("Did not find registered movable override for this movable scan.");
                 return true;
             }
 
-            PuzzleOverride TScanPosition = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, TScanPuzzleIndex);
+            PuzzleOverride _override = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, TScanPuzzleIndex);
 
-            if (TScanPosition == null || TScanPosition.TPositions.Count < 1)
+            if (_override == null || _override.TPositions.Count < 1)
             {
-                Logger.Error("No Override for this T-Scan, falling back to vanilla impl.");
+                ScanPosOverrideLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                 return true;
             }
 
+            _override.TPositions.ForEach(pos => movingComp.ScanPositions.Add(pos.ToVector3()));
+            gameObject.transform.position = _override.TPositions[0].ToVector3();
+            ScanPosOverrideLogger.Warning("Overriding T-Scan pos!");
 
-            foreach(var pos in TScanPosition.TPositions)
-            {
-                movingComp.ScanPositions.Add(pos.ToVector3());
-            }
+            TComponent.m_amountOfPositions = _override.TPositions.Count;
 
-            gameObject.transform.position = TScanPosition.TPositions[0].ToVector3();
-            Logger.Warning("Overriding T-Scan pos!");
+            if(_override.TMoveSpeedMulti > 0f)
+                TComponent.m_movementSpeed *= _override.TMoveSpeedMulti;
             return false;
         }
     }

@@ -54,7 +54,7 @@ namespace ScanPosOverride.JSON
             }
             catch (Exception e)
             {
-                Logger.Error($"Exception thrown while reading path from DataDumper (MTFO): \n{e}");
+                ScanPosOverrideLogger.Error($"Exception thrown while reading path from DataDumper (MTFO): \n{e}");
             }
         }
     }

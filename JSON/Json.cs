@@ -19,13 +19,12 @@ namespace ScanPosOverride.JSON
         static Json()
         {
             _setting.Converters.Add(new JsonStringEnumConverter());
-            _setting.Converters.Add(new Il2CppListConverterFactory());
 
             if (MTFOPartialDataUtil.IsLoaded && MTFOPartialDataUtil.Initialized)
             {
                 _setting.Converters.Add(MTFOPartialDataUtil.PersistentIDConverter);
                 _setting.Converters.Add(MTFOPartialDataUtil.LocalizedTextConverter);
-                Logger.Log("PartialData Support Found!");
+                ScanPosOverrideLogger.Log("PartialData Support Found!");
             }
             else
             {

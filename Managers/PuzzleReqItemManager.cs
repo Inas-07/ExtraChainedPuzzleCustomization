@@ -43,7 +43,7 @@ namespace ScanPosOverride.Managers
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
             {
-                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                ScanPosOverrideLogger.Error($"Unregistered BigPickup Item with index {itemIndex}");
                 return false;
             }
 
@@ -61,7 +61,7 @@ namespace ScanPosOverride.Managers
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex))
             {
-                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                ScanPosOverrideLogger.Error($"Unregistered BigPickup Item with index {itemIndex}");
                 return false;
             }
 
@@ -100,7 +100,7 @@ namespace ScanPosOverride.Managers
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex) && itemIndex != 0u)
             {
-                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                ScanPosOverrideLogger.Error($"Unregistered BigPickup Item with index {itemIndex}");
                 return;
             }
 
@@ -117,7 +117,7 @@ namespace ScanPosOverride.Managers
 
             if (!BigPickupItemsInLevel.ContainsKey(itemIndex) && itemIndex != 0u)
             {
-                Logger.Error($"Unregistered BigPickup Item with index {itemIndex}");
+                ScanPosOverrideLogger.Error($"Unregistered BigPickup Item with index {itemIndex}");
                 return;
             }
 
@@ -149,7 +149,7 @@ namespace ScanPosOverride.Managers
                     CP_Bioscan_Core bioscan_Core = childCore.TryCast<CP_Bioscan_Core>();
                     if (bioscan_Core == null)
                     {
-                        Logger.Error("Failed to cast child core to CP_Bioscan_Core");
+                        ScanPosOverrideLogger.Error("Failed to cast child core to CP_Bioscan_Core");
                         continue;
                     }
 
@@ -193,7 +193,7 @@ namespace ScanPosOverride.Managers
                 info.AppendLine();
             }
 
-            Logger.Debug(info.ToString());
+            ScanPosOverrideLogger.Debug(info.ToString());
         }
 
         internal void OnEnterLevel()

@@ -115,7 +115,7 @@ namespace ScanPosOverride.Managers
                         CP_Cluster_Core clusterCore = core.TryCast<CP_Cluster_Core>();
                         if (clusterCore == null)
                         {
-                            Logger.Error("Found cluster core Pointer, but TryCast failed.");
+                            ScanPosOverrideLogger.Error("Found cluster core Pointer, but TryCast failed.");
                             continue;
                         }
 
@@ -128,7 +128,7 @@ namespace ScanPosOverride.Managers
                             iChainedPuzzleCore clusterChildCore = clusterCore.m_childCores[j];
                             if (!bioscanCoreIntPtr2Index.ContainsKey(clusterChildCore.Pointer))
                             {
-                                Logger.Error("Unregistered clustered iChainedPuzzleCore found...");
+                                ScanPosOverrideLogger.Error("Unregistered clustered iChainedPuzzleCore found...");
                                 continue;
                             }
 
@@ -141,14 +141,14 @@ namespace ScanPosOverride.Managers
                     }
                     else
                     {
-                        Logger.Error("Unregistered iChainedPuzzleCore found...");
+                        ScanPosOverrideLogger.Error("Unregistered iChainedPuzzleCore found...");
                     }
 
                 }
                 chainedPuzzlesInfo.Append('\n');
             }
 
-            Logger.Debug(chainedPuzzlesInfo.ToString());
+            ScanPosOverrideLogger.Debug(chainedPuzzlesInfo.ToString());
         }
 
         public uint GetBioscanCoreOverrideIndex(CP_Bioscan_Core core) => !bioscanCore2Index.ContainsKey(core) ? 0u : bioscanCore2Index[core];
@@ -204,7 +204,7 @@ namespace ScanPosOverride.Managers
             }
             else
             {
-                Logger.Error("Failed to find CP_BioScan_Core owner (instance of ChainedPuzzleInstance).");
+                ScanPosOverrideLogger.Error("Failed to find CP_BioScan_Core owner (instance of ChainedPuzzleInstance).");
                 return null;
             }
         }

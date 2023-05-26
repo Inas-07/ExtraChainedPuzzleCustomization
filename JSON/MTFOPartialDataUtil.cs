@@ -21,6 +21,7 @@ namespace ScanPosOverride.JSON
 
         static MTFOPartialDataUtil()
         {
+
             if (IL2CPPChainloader.Instance.Plugins.TryGetValue(PLUGIN_GUID, out var info))
             {
                 try
@@ -66,7 +67,7 @@ namespace ScanPosOverride.JSON
                 }
                 catch (Exception e)
                 {
-                    Logger.Error($"Exception thrown while reading data from MTFO_Extension_PartialData:\n{e}");
+                    ScanPosOverrideLogger.Error($"Exception thrown while reading data from MTFO_Extension_PartialData:\n{e}");
                 }
             }
         }

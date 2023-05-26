@@ -42,7 +42,7 @@ namespace ScanPosOverride.Patches
                     CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
                     if (lastClusterPuzzle == null)
                     {
-                        Logger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
+                        ScanPosOverrideLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
                     }
 
                     else prevPuzzlePos = lastClusterPuzzle.transform.position;
@@ -84,7 +84,7 @@ namespace ScanPosOverride.Patches
                 revealWithHoloPath = false;
             }
 
-            Logger.Warning("Overriding CP_Cluster_Core!");
+            ScanPosOverrideLogger.Warning("Overriding CP_Cluster_Core!");
         }
 
         // handle cluster T-scan
@@ -102,7 +102,7 @@ namespace ScanPosOverride.Patches
 
                 if (TScanPositions == null || TScanPositions.TPositions == null || TScanPositions.TPositions.Count < 1)
                 {
-                    Logger.Error("No Override for this T-Scan, falling back to vanilla impl.");
+                    ScanPosOverrideLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                     continue;
                 }
 
@@ -121,7 +121,7 @@ namespace ScanPosOverride.Patches
 
                     // disable the holopath after Setup() complete.
                     __instance.m_revealWithHoloPath = false;
-                    Logger.Warning("Overriding T-Scan pos!");
+                    ScanPosOverrideLogger.Warning("Overriding T-Scan pos!");
                 }
                 else
                 {
@@ -137,7 +137,7 @@ namespace ScanPosOverride.Patches
             if(overrideData == null || overrideData.ConcurrentCluster == false) return;
 
             PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
-            Logger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
+            ScanPosOverrideLogger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
         }
     }
 }

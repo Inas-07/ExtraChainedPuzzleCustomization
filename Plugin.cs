@@ -10,7 +10,7 @@ using MTFO.API;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.4.1")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.5.0")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
@@ -27,7 +27,7 @@ namespace ScanPosOverride
 
         public override void Load()
         {
-            Logger.Error(OVERRIDE_SCAN_POS_PATH);
+            ScanPosOverrideLogger.Error(OVERRIDE_SCAN_POS_PATH);
             if (!Directory.Exists(OVERRIDE_SCAN_POS_PATH))
             {
                 Directory.CreateDirectory(OVERRIDE_SCAN_POS_PATH);
@@ -47,7 +47,7 @@ namespace ScanPosOverride
 
                 if (PuzzleOverrides.ContainsKey(puzzleOverrideConfig.MainLevelLayout))
                 {
-                    Logger.Warning("Duplicate MainLevelLayout {0}, won't load.", puzzleOverrideConfig.MainLevelLayout);
+                    ScanPosOverrideLogger.Warning("Duplicate MainLevelLayout {0}, won't load.", puzzleOverrideConfig.MainLevelLayout);
                     continue;
                 }
 
@@ -56,7 +56,7 @@ namespace ScanPosOverride
                 {
                     if(levelPuzzleToOverride.ContainsKey(puzzleToOverride.Index))
                     {
-                        Logger.Error("Duplicate Puzzle Override found. MainLevelLayout {0}, Index {1}.", puzzleOverrideConfig.MainLevelLayout, puzzleToOverride.Index);
+                        ScanPosOverrideLogger.Error("Duplicate Puzzle Override found. MainLevelLayout {0}, Index {1}.", puzzleOverrideConfig.MainLevelLayout, puzzleToOverride.Index);
                         // will not replace.
                         continue;
                     }
@@ -76,7 +76,7 @@ namespace ScanPosOverride
 
         private static void LiveEdit_FileChanged(LiveEditEventArgs e)
         {
-            Logger.Warning($"LiveEdit File Changed: {e.FullPath}.");
+            ScanPosOverrideLogger.Warning($"LiveEdit File Changed: {e.FullPath}.");
 
             LiveEdit.TryReadFileContent(e.FullPath, (content) =>
             {
@@ -84,7 +84,7 @@ namespace ScanPosOverride
                 if(!PuzzleOverrides.ContainsKey(overrideConfig.MainLevelLayout))
                 {
                     // could also allow replacing.
-                    Logger.Warning("MainLevelLayout not found, which is now not supported. Will not replace.");
+                    ScanPosOverrideLogger.Warning("MainLevelLayout not found, which is now not supported. Will not replace.");
                     return;
                 }
 
@@ -96,7 +96,7 @@ namespace ScanPosOverride
                 {
                     if (levelPuzzleToOverride.ContainsKey(puzzleToOverride.Index))
                     {
-                        Logger.Error("Duplicate Puzzle Override found. MainLevelLayout {0}, Index {1}.", overrideConfig.MainLevelLayout, puzzleToOverride.Index);
+                        ScanPosOverrideLogger.Error("Duplicate Puzzle Override found. MainLevelLayout {0}, Index {1}.", overrideConfig.MainLevelLayout, puzzleToOverride.Index);
                         // will not replace.
                         continue;
                     }
@@ -104,7 +104,7 @@ namespace ScanPosOverride
                     levelPuzzleToOverride.Add(puzzleToOverride.Index, puzzleToOverride);
                 }
 
-                Logger.Warning("Replaced Override Puzzle with MainLevelLayout {0}", overrideConfig.MainLevelLayout);
+                ScanPosOverrideLogger.Warning("Replaced Override Puzzle with MainLevelLayout {0}", overrideConfig.MainLevelLayout);
             });
         }
 

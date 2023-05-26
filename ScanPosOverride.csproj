@@ -40,12 +40,10 @@
     <Compile Include="Patches\Patch_CP_Cluster_Core_Setup.cs" />
     <Compile Include="Patches\Patches_CP_Cluster_Hud_ReqItems.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverrideJsonFile.cs" />
-    <Compile Include="JSON\Il2CppListConverter.cs" />
-    <Compile Include="JSON\Il2CppListConverterFactory.cs" />
     <Compile Include="JSON\Json.cs" />
     <Compile Include="JSON\MTFOPartialDataUtil.cs" />
     <Compile Include="JSON\MTFOUtil.cs" />
-    <Compile Include="Logger.cs" />
+    <Compile Include="ScanPosOverrideLogger.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverride.cs" />
     <Compile Include="PuzzleOverrideData\Vec3.cs" />

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ScanPosOverride
 {
-    internal static class Logger
+    internal static class ScanPosOverrideLogger
     {
         private static readonly ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource("ScanPosOverride");
 
