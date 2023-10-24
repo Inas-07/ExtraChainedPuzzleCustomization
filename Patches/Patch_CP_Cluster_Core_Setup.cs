@@ -1,6 +1,7 @@
 ﻿using ChainedPuzzles;
 using GameData;
 using HarmonyLib;
+using LevelGeneration;
 using ScanPosOverride.Managers;
 using ScanPosOverride.PuzzleOverrideData;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace ScanPosOverride.Patches
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CP_Cluster_Core), nameof(CP_Cluster_Core.Setup))]
         private static void Pre_CP_Cluster_Core_Setup(
-            CP_Cluster_Core __instance, int puzzleIndex, iChainedPuzzleOwner owner,
+            CP_Cluster_Core __instance, int puzzleIndex, iChainedPuzzleOwner owner, LG_Area sourceArea,
             ref Vector3 prevPuzzlePos, ref bool revealWithHoloPath)
         {
             ChainedPuzzleInstance scanOwner = new ChainedPuzzleInstance(owner.Pointer);
@@ -39,7 +40,7 @@ namespace ScanPosOverride.Patches
                 }
                 else
                 {
-                    CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
+                    CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].Cast<CP_Cluster_Core>();
                     if (lastClusterPuzzle == null)
                     {
                         ScanPosOverrideLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
@@ -52,8 +53,8 @@ namespace ScanPosOverride.Patches
             // -----------------------------------------
             //   modify clustering position
             // -----------------------------------------
-            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
-            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
+            uint puzzleOverrideIndex = PuzzleInstanceManager.Current.Register(__instance, sourceArea.m_courseNode);
+            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, puzzleOverrideIndex);
             if (puzzleOverride == null) return;
 
             if (puzzleOverride.Position.x != 0.0 || puzzleOverride.Position.y != 0.0 || puzzleOverride.Position.z != 0.0
@@ -88,17 +89,17 @@ namespace ScanPosOverride.Patches
         }
 
         // handle cluster T-scan
-        [HarmonyPostfix]
+        [HarmonyPostfix] // NOTE: all stuff has been setup properly
         [HarmonyPatch(typeof(CP_Cluster_Core), nameof(CP_Cluster_Core.Setup))]
         private static void Post_CP_Cluster_Core_Setup(CP_Cluster_Core __instance)
         {
             foreach(var childCore in __instance.m_childCores)
             {
                 if (!childCore.IsMovable) continue;
-                uint puzzleOverrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(childCore.Pointer);
+                uint puzzleOverrideIndex = PuzzleInstanceManager.Current.GetZoneInstanceIndex(childCore.Cast<CP_Bioscan_Core>()); 
                 if (puzzleOverrideIndex == 0) continue;
 
-                PuzzleOverride clusterTOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
+                PuzzleOverride clusterTOverride = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, puzzleOverrideIndex);
 
                 if (clusterTOverride == null || clusterTOverride.TPositions == null || clusterTOverride.TPositions.Count < 1)
                 {
@@ -136,10 +137,10 @@ namespace ScanPosOverride.Patches
                 }
             }
 
-            uint overrideIndex = PuzzleOverrideManager.Current.GetClusterCoreOverrideIndex(__instance);
+            uint overrideIndex = PuzzleInstanceManager.Current.GetZoneInstanceIndex(__instance);
             if (overrideIndex == 0) return;
 
-            PuzzleOverride overrideData = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
+            PuzzleOverride overrideData = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, overrideIndex);
             if(overrideData == null || overrideData.ConcurrentCluster == false) return;
 
             PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
