@@ -1,10 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using ExtraObjectiveSetup.BaseClasses;
+using ChainedPuzzles;
+using System.Text.Json.Serialization;
 using GameData;
+using System.Collections.Generic;
+
 namespace ScanPosOverride.PuzzleOverrideData
 {
-    internal sealed class PuzzleOverride
+    public class PuzzleInstanceDefinition: BaseInstanceDefinition
     {
-        public uint Index { get; set; }
+        public uint Index { get; set; }  // TODO: deprecate this in the future
 
         public Vec3 Position { get; set; } = new Vec3();
 
@@ -23,5 +27,11 @@ namespace ScanPosOverride.PuzzleOverrideData
         public List<WardenObjectiveEventData> EventsOnPuzzleActivate { get; set; } = new();
 
         public List<WardenObjectiveEventData> EventsOnPuzzleSolved { get; set; } = new();
+
+        [JsonIgnore]
+        public CP_Bioscan_Core bioscan_Core { get; internal set; } = null;
+
+        [JsonIgnore]
+        public CP_Cluster_Core cluster_Core { get; internal set; } = null;
     }
 }

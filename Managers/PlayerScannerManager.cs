@@ -178,8 +178,7 @@ namespace ScanPosOverride.Managers
         {
             if(ConcurrentClusterStateMutex == null)
             {
-                ScanPosOverrideLogger.Error("ConcurrentCluster: scan mutex uninitialized.");
-                return false;
+                ConcurrentClusterStateMutex = new();
             }
 
             if (ConcurrentClusterStateMutex.WaitOne(2000))
@@ -240,7 +239,6 @@ namespace ScanPosOverride.Managers
 
         public void Init()
         {
-            ConcurrentClusterStateMutex = new();
         }
 
         public void Clear()
@@ -253,11 +251,7 @@ namespace ScanPosOverride.Managers
             Scanners.Clear();
             OriginalScanSpeed.Clear();
 
-            if (ConcurrentClusterStateMutex != null)
-            {
-                ConcurrentClusterStateMutex.Dispose();
-            }
-
+            ConcurrentClusterStateMutex?.Dispose();
             ConcurrentClusterStateMutex = null;
         }
 
@@ -265,6 +259,7 @@ namespace ScanPosOverride.Managers
         { 
             Current = new PlayerScannerManager();
             LevelAPI.OnBuildDone += Current.Init;
+            LevelAPI.OnBuildStart += Current.Clear;
             LevelAPI.OnLevelCleanup += Current.Clear;
         }
 

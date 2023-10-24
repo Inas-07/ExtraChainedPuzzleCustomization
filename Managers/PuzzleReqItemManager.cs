@@ -214,6 +214,7 @@ namespace ScanPosOverride.Managers
         static PuzzleReqItemManager()
         {
             Current = new();
+            LevelAPI.OnBuildStart += Current.Clear;
             LevelAPI.OnLevelCleanup += Current.Clear;
             LevelAPI.OnEnterLevel += Current.OnEnterLevel;
         }
