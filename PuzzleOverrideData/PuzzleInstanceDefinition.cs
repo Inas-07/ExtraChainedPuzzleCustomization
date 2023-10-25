@@ -27,5 +27,11 @@ namespace ScanPosOverride.PuzzleOverrideData
         public List<WardenObjectiveEventData> EventsOnPuzzleActivate { get; set; } = new();
 
         public List<WardenObjectiveEventData> EventsOnPuzzleSolved { get; set; } = new();
+
+        [JsonIgnore]
+        public CP_Bioscan_Core bioscan_Core { get; internal set; } = null;
+
+        [JsonIgnore]
+        public CP_Cluster_Core cluster_Core { get; internal set; } = null;
     }
 }

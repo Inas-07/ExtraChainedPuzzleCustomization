@@ -13,7 +13,7 @@ namespace ScanPosOverride.Patches
     {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.Setup))]
-        private static void Pre_CP_Bioscan_Core_Setup(CP_Bioscan_Core __instance, LG_Area sourceArea,
+        private static void Pre_CP_Bioscan_Core_Setup(CP_Bioscan_Core __instance,
             int puzzleIndex, iChainedPuzzleOwner owner, ref Vector3 prevPuzzlePos, ref bool revealWithHoloPath, ref bool onlyShowHUDWhenPlayerIsClose)
         {
             // owner could either be ChainedPuzzleInstance (single scan), or CP_Cluster_Core (clustered scan).
@@ -86,8 +86,8 @@ namespace ScanPosOverride.Patches
             // -----------------------------------------
             //   modify this puzzle position / rotation
             // -----------------------------------------
-            uint puzzleOverrideIndex = PuzzleInstanceManager.Current.Register(__instance, sourceArea.m_courseNode);
-            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, puzzleOverrideIndex);
+            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
+            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
             // No override. use vanilla
             if (puzzleOverride == null) return;

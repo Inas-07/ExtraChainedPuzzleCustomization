@@ -2,7 +2,6 @@
 using HarmonyLib;
 using ScanPosOverride.PuzzleOverrideData;
 using ScanPosOverride.Managers;
-using LevelGeneration;
 
 namespace ScanPosOverride.Patches
 {
@@ -11,7 +10,7 @@ namespace ScanPosOverride.Patches
     {
         [HarmonyPrefix]
         [HarmonyPatch(typeof(ChainedPuzzleInstance), nameof(ChainedPuzzleInstance.SetupMovement))]
-        private static bool Pre_SetupMovement(ChainedPuzzleInstance __instance, UnityEngine.GameObject gameObject, LG_Area sourceArea)
+        private static bool Pre_SetupMovement(ChainedPuzzleInstance __instance, UnityEngine.GameObject gameObject)
         {
             iChainedPuzzleMovable movingComp = gameObject.GetComponent<iChainedPuzzleMovable>();
             if (movingComp == null || !movingComp.UsingStaticBioscanPoints)
@@ -21,9 +20,15 @@ namespace ScanPosOverride.Patches
 
             CP_BasicMovable TComponent = movingComp.Cast<CP_BasicMovable>();
             iChainedPuzzleCore coreComp = gameObject.GetComponent<iChainedPuzzleCore>();
-            CP_Bioscan_Core core = coreComp.Cast<CP_Bioscan_Core>();
+            CP_Bioscan_Core core = coreComp.TryCast<CP_Bioscan_Core>();
 
-            uint TScanPuzzleIndex = PuzzleInstanceManager.Current.GetZoneInstanceIndex(core); // At this point core has been setup properly
+            if(core == null)
+            {
+                ScanPosOverrideLogger.Error("Pre_SetupMovement: iChainedPuzzleCore -> CP_Bioscan_Core failed");
+                return true;
+            }
+
+            uint TScanPuzzleIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(core.Pointer);
 
             if (TScanPuzzleIndex == 0)
             {
@@ -31,7 +36,7 @@ namespace ScanPosOverride.Patches
                 return true;
             }
 
-            PuzzleOverride _override = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, TScanPuzzleIndex);
+            PuzzleOverride _override = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, TScanPuzzleIndex);
 
             if (_override == null || _override.TPositions.Count < 1)
             {

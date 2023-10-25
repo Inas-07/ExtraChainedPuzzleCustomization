@@ -31,19 +31,15 @@
   <ItemGroup>
     <Compile Include="JSON\InjectLibUtil.cs" />
     <Compile Include="JSON\LocalizedTextConverter.cs" />
-    <Compile Include="Managers\LocalizedIndexManager.cs" />
     <Compile Include="Managers\PlayerScannerManager.cs" />
-    <Compile Include="Managers\PuzzleDefinitionManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />
-    <Compile Include="Managers\PuzzleWrapper.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_OnSyncStateChanged.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_Setup.cs" />
-    <Compile Include="Managers\PuzzleInstanceManager.cs" />
+    <Compile Include="Managers\PuzzleOverrideManager.cs" />
     <Compile Include="Patches\Patch_ChainedPuzzleInstance_SetupMovement.cs" />
     <Compile Include="Patches\Patch_CarryItemPickup_Core_Setup.cs" />
     <Compile Include="Patches\Patch_CP_Cluster_Core_Setup.cs" />
     <Compile Include="Patches\Patches_CP_Cluster_Hud_ReqItems.cs" />
-    <Compile Include="PuzzleOverrideData\PuzzleInstanceDefinition.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverrideJsonFile.cs" />
     <Compile Include="JSON\Json.cs" />
     <Compile Include="JSON\MTFOPartialDataUtil.cs" />
