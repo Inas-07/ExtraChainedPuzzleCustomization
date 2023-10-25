@@ -31,24 +31,22 @@ namespace ScanPosOverride.Patches
                 return true;
             }
 
-            var node = core.CourseNode;
-            var globalZoneIndex = (node.m_dimension.DimensionIndex, node.LayerType, node.m_zone.LocalIndex); // core here has already been setup properly
-            PuzzleInstanceDefinition def = PuzzleDefinitionManager.Current.GetDefinition(globalZoneIndex, TScanPuzzleIndex);
+            PuzzleOverride _override = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, TScanPuzzleIndex);
 
-            if (def == null || def.TPositions.Count < 1)
+            if (_override == null || _override.TPositions.Count < 1)
             {
                 ScanPosOverrideLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                 return true;
             }
 
-            def.TPositions.ForEach(pos => movingComp.ScanPositions.Add(pos.ToVector3()));
-            gameObject.transform.position = def.TPositions[0].ToVector3();
+            _override.TPositions.ForEach(pos => movingComp.ScanPositions.Add(pos.ToVector3()));
+            gameObject.transform.position = _override.TPositions[0].ToVector3();
             ScanPosOverrideLogger.Warning("Overriding T-Scan pos!");
 
-            TComponent.m_amountOfPositions = def.TPositions.Count;
+            TComponent.m_amountOfPositions = _override.TPositions.Count;
 
-            if(def.TMoveSpeedMulti > 0f)
-                TComponent.m_movementSpeed *= def.TMoveSpeedMulti;
+            if(_override.TMoveSpeedMulti > 0f)
+                TComponent.m_movementSpeed *= _override.TMoveSpeedMulti;
             return false;
         }
     }

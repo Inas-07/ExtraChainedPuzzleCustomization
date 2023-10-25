@@ -1,6 +1,6 @@
 ﻿using ExtraObjectiveSetup.BaseClasses;
 using ScanPosOverride.PuzzleOverrideData;
-using System.Collections.Generic;
+
 namespace ScanPosOverride.Managers
 {
     public class PuzzleDefinitionManager : InstanceDefinitionManager<PuzzleInstanceDefinition>
@@ -19,24 +19,5 @@ namespace ScanPosOverride.Managers
         private PuzzleDefinitionManager() : base() { }
 
         static PuzzleDefinitionManager() { }
-
-        public static PuzzleInstanceDefinition From(PuzzleOverride oldDef)
-        {
-            var result = new PuzzleInstanceDefinition()
-            {
-                Index = oldDef.Index,
-                Position = oldDef.Position,
-                Rotation = oldDef.Rotation,
-                HideSpline = oldDef.HideSpline,
-                ConcurrentCluster = oldDef.ConcurrentCluster,
-                TMoveSpeedMulti = oldDef.TMoveSpeedMulti,
-                TPositions = oldDef.TPositions,
-                RequiredItemsIndices = oldDef.RequiredItemsIndices,
-                EventsOnPuzzleActivate = oldDef.EventsOnPuzzleActivate,
-                EventsOnPuzzleSolved = oldDef.EventsOnPuzzleSolved,
-            };
-
-            return result;
-        }
     }
 }

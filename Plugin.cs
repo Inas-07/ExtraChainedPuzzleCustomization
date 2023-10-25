@@ -7,7 +7,6 @@ using ScanPosOverride.JSON;
 using GTFO.API.Utilities;
 using HarmonyLib;
 using MTFO.API;
-using ScanPosOverride.Managers;
 
 namespace ScanPosOverride
 {
@@ -22,48 +21,56 @@ namespace ScanPosOverride
         // MainLevelLayout, List of puzzles to override
         private static Dictionary<uint, Dictionary<uint, PuzzleOverride>> PuzzleOverrides = new();
 
-        public static readonly string OLD_PATH = Path.Combine(MTFOPathAPI.CustomPath, "ScanPositionOverrides");
+        public static readonly string OVERRIDE_SCAN_POS_PATH = Path.Combine(MTFOPathAPI.CustomPath, "ScanPositionOverrides");
 
         private static LiveEditListener listener = null;
         private static Harmony m_Harmony = null;
 
         public override void Load()
         {
-            ScanPosOverrideLogger.Error(OLD_PATH);
-            if (Directory.Exists(OLD_PATH))
+            ScanPosOverrideLogger.Error(OVERRIDE_SCAN_POS_PATH);
+            if (!Directory.Exists(OVERRIDE_SCAN_POS_PATH))
             {
-                // first reading of all config
-                foreach (string full_path in Directory.EnumerateFiles(OLD_PATH, "*.json", SearchOption.AllDirectories))
-                {
-                    PuzzleOverrideJsonFile puzzleOverrideConfig;
-                    Json.Load(full_path, out puzzleOverrideConfig);
+                Directory.CreateDirectory(OVERRIDE_SCAN_POS_PATH);
+                var file = File.CreateText(Path.Combine(OVERRIDE_SCAN_POS_PATH, "Template.json"));
+                file.WriteLine(Json.Serialize(new PuzzleOverrideJsonFile()));
+                file.Flush();
+                file.Close();
 
-                    if (PuzzleOverrides.ContainsKey(puzzleOverrideConfig.MainLevelLayout))
+                return;
+            }
+
+            // first reading of all config
+            foreach (string config_file in Directory.EnumerateFiles(OVERRIDE_SCAN_POS_PATH, "*.json", SearchOption.AllDirectories))
+            {
+                PuzzleOverrideJsonFile puzzleOverrideConfig;
+                Json.Load(config_file, out puzzleOverrideConfig);
+
+                if (PuzzleOverrides.ContainsKey(puzzleOverrideConfig.MainLevelLayout))
+                {
+                    ScanPosOverrideLogger.Warning("Duplicate MainLevelLayout {0}, won't load.", puzzleOverrideConfig.MainLevelLayout);
+                    continue;
+                }
+
+                Dictionary<uint, PuzzleOverride> levelPuzzleToOverride = new();
+                foreach(var puzzleToOverride in puzzleOverrideConfig.Puzzles)
+                {
+                    if(levelPuzzleToOverride.ContainsKey(puzzleToOverride.Index))
                     {
-                        ScanPosOverrideLogger.Warning("Duplicate MainLevelLayout {0}, won't load.", puzzleOverrideConfig.MainLevelLayout);
+                        ScanPosOverrideLogger.Error("Duplicate Puzzle Override found. MainLevelLayout {0}, Index {1}.", puzzleOverrideConfig.MainLevelLayout, puzzleToOverride.Index);
+                        // will not replace.
                         continue;
                     }
 
-                    Dictionary<uint, PuzzleOverride> levelPuzzleToOverride = new();
-                    foreach (var puzzleToOverride in puzzleOverrideConfig.Puzzles)
-                    {
-                        if (levelPuzzleToOverride.ContainsKey(puzzleToOverride.Index))
-                        {
-                            ScanPosOverrideLogger.Error("Duplicate Puzzle Override found. MainLevelLayout {0}, Index {1}.", puzzleOverrideConfig.MainLevelLayout, puzzleToOverride.Index);
-                            // will not replace.
-                            continue;
-                        }
-
-                        levelPuzzleToOverride.Add(puzzleToOverride.Index, puzzleToOverride);
-                    }
-
-                    PuzzleOverrides.Add(puzzleOverrideConfig.MainLevelLayout, levelPuzzleToOverride);
+                    levelPuzzleToOverride.Add(puzzleToOverride.Index, puzzleToOverride);
                 }
+
+                PuzzleOverrides.Add(puzzleOverrideConfig.MainLevelLayout, levelPuzzleToOverride);
             }
 
-            listener = LiveEdit.CreateListener(OLD_PATH, "*.json", includeSubDir: true);
+            listener = LiveEdit.CreateListener(OVERRIDE_SCAN_POS_PATH, "*.json", includeSubDir: true);
             listener.FileChanged += LiveEdit_FileChanged;
-            PuzzleDefinitionManager.Current.Init();
+
             m_Harmony = new Harmony("ScanPosOverride.Patches");
             m_Harmony.PatchAll();
         }
@@ -107,15 +114,15 @@ namespace ScanPosOverride
          * @param: puzzleIndex: the `Index` in the json file. Don't confuse it with the puzzleIndex in CP_Bioscan_Core and CP_Cluster_Core. 
          * @return: puzzle to override, or `null` if there's no override for this puzzle.
         */
-        //internal static PuzzleOverride GetOverride(uint mainLevelLayout, uint puzzleIndex) 
-        //{
-        //    if (!PuzzleOverrides.ContainsKey(mainLevelLayout)) return null;
+        internal static PuzzleOverride GetOverride(uint mainLevelLayout, uint puzzleIndex) 
+        {
+            if (!PuzzleOverrides.ContainsKey(mainLevelLayout)) return null;
 
-        //    var levelPuzzleToOverride = PuzzleOverrides[mainLevelLayout];
+            var levelPuzzleToOverride = PuzzleOverrides[mainLevelLayout];
 
-        //    if (!levelPuzzleToOverride.ContainsKey(puzzleIndex)) return null;
+            if (!levelPuzzleToOverride.ContainsKey(puzzleIndex)) return null;
 
-        //    return levelPuzzleToOverride[puzzleIndex];
-        //} 
+            return levelPuzzleToOverride[puzzleIndex];
+        } 
     }
 }

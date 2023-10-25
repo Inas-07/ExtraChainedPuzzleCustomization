@@ -54,37 +54,33 @@ namespace ScanPosOverride.Patches
             //   modify clustering position
             // -----------------------------------------
             uint puzzleOverrideIndex = PuzzleInstanceManager.Current.Register(__instance, sourceArea.m_courseNode);
-            
-            var node = sourceArea.m_courseNode;
-            var globalZoneIndex = (node.m_dimension.DimensionIndex, node.LayerType, node.m_zone.LocalIndex); // core here has already been setup properly
-            PuzzleInstanceDefinition def = PuzzleDefinitionManager.Current.GetDefinition(globalZoneIndex, puzzleOverrideIndex);
-            
-            if (def == null) return;
+            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, puzzleOverrideIndex);
+            if (puzzleOverride == null) return;
 
-            if (def.Position.x != 0.0 || def.Position.y != 0.0 || def.Position.z != 0.0
-                || def.Rotation.x != 0.0 || def.Rotation.y != 0.0 || def.Rotation.z != 0.0)
+            if (puzzleOverride.Position.x != 0.0 || puzzleOverride.Position.y != 0.0 || puzzleOverride.Position.z != 0.0
+                || puzzleOverride.Rotation.x != 0.0 || puzzleOverride.Rotation.y != 0.0 || puzzleOverride.Rotation.z != 0.0)
             {
-                __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
+                __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
             }
 
-            if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0)
+            if (puzzleOverride.EventsOnPuzzleSolved != null && puzzleOverride.EventsOnPuzzleSolved.Count > 0)
             {
                 __instance.add_OnPuzzleDone(new System.Action<int>((i) => {
-                    foreach (WardenObjectiveEventData e in def.EventsOnPuzzleSolved)
+                    foreach (WardenObjectiveEventData e in puzzleOverride.EventsOnPuzzleSolved)
                     {
                         WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(e, eWardenObjectiveEventTrigger.None, true);
                     }
                 }));
             }
 
-            if (def.RequiredItemsIndices != null && def.RequiredItemsIndices.Count > 0)
+            if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
             {
-                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, def.RequiredItemsIndices);
+                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
 
             // no spline for T scan
             // prolly work for "clustered T-scan" as well?
-            if (def.HideSpline)
+            if (puzzleOverride.HideSpline)
             {
                 revealWithHoloPath = false;
             }
@@ -95,20 +91,17 @@ namespace ScanPosOverride.Patches
         // handle cluster T-scan
         [HarmonyPostfix] // NOTE: all stuff has been setup properly
         [HarmonyPatch(typeof(CP_Cluster_Core), nameof(CP_Cluster_Core.Setup))]
-        private static void Post_CP_Cluster_Core_Setup(CP_Cluster_Core __instance, LG_Area sourceArea)
+        private static void Post_CP_Cluster_Core_Setup(CP_Cluster_Core __instance)
         {
-            var node = sourceArea.m_courseNode;
-            var globalZoneIndex = (node.m_dimension.DimensionIndex, node.LayerType, node.m_zone.LocalIndex); // core here has already been setup properly
-
-            foreach (var childCore in __instance.m_childCores)
+            foreach(var childCore in __instance.m_childCores)
             {
                 if (!childCore.IsMovable) continue;
                 uint puzzleOverrideIndex = PuzzleInstanceManager.Current.GetZoneInstanceIndex(childCore.Cast<CP_Bioscan_Core>()); 
                 if (puzzleOverrideIndex == 0) continue;
 
-                PuzzleInstanceDefinition clusterTDef = PuzzleDefinitionManager.Current.GetDefinition(globalZoneIndex, puzzleOverrideIndex);
+                PuzzleOverride clusterTOverride = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, puzzleOverrideIndex);
 
-                if (clusterTDef == null || clusterTDef.TPositions == null || clusterTDef.TPositions.Count < 1)
+                if (clusterTOverride == null || clusterTOverride.TPositions == null || clusterTOverride.TPositions.Count < 1)
                 {
                     ScanPosOverrideLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                     continue;
@@ -122,15 +115,15 @@ namespace ScanPosOverride.Patches
                 }
                 else if (TScanCore.m_movingComp.UsingStaticBioscanPoints)
                 {
-                    foreach (var pos in clusterTDef.TPositions)
+                    foreach (var pos in clusterTOverride.TPositions)
                         TScanCore.m_movingComp.ScanPositions.Add(pos.ToVector3());
 
-                    TScanCore.transform.position = clusterTDef.TPositions[0].ToVector3();
+                    TScanCore.transform.position = clusterTOverride.TPositions[0].ToVector3();
                     
-                    if (clusterTDef.TMoveSpeedMulti > 0.0)
+                    if (clusterTOverride.TMoveSpeedMulti > 0.0)
                     {
                         var TMovableComp = TScanCore.m_movingComp.Cast<CP_BasicMovable>();
-                        TMovableComp.m_movementSpeed *= clusterTDef.TMoveSpeedMulti; 
+                        TMovableComp.m_movementSpeed *= clusterTOverride.TMoveSpeedMulti; 
                     }
 
                     // disable the holopath after Setup() complete.
@@ -147,8 +140,8 @@ namespace ScanPosOverride.Patches
             uint overrideIndex = PuzzleInstanceManager.Current.GetZoneInstanceIndex(__instance);
             if (overrideIndex == 0) return;
 
-            PuzzleInstanceDefinition def = PuzzleDefinitionManager.Current.GetDefinition(globalZoneIndex, overrideIndex);
-            if (def == null || def.ConcurrentCluster == false) return;
+            PuzzleOverride overrideData = Plugin.GetOverride(PuzzleInstanceManager.MainLevelLayout, overrideIndex);
+            if(overrideData == null || overrideData.ConcurrentCluster == false) return;
 
             PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
             ScanPosOverrideLogger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
