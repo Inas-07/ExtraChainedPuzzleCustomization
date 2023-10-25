@@ -4,18 +4,14 @@ using System.Collections.Generic;
 using System.Text;
 using GTFO.API;
 using LevelGeneration;
-using ExtraObjectiveSetup.BaseClasses;
-using ScanPosOverride.PuzzleOverrideData;
 
 namespace ScanPosOverride.Managers
 {
-    public class PuzzleOverrideManager: InstanceDefinitionManager<PuzzleInstanceDefinition>
+    public class PuzzleOverrideManager
     {
         public static uint MainLevelLayout => RundownManager.ActiveExpedition.LevelLayoutData;
 
-        protected override string DEFINITION_NAME => "ChainedPuzzles";
-
-        public static readonly PuzzleOverrideManager Current = new();
+        public static readonly PuzzleOverrideManager Current;
 
         // core -> info
         private Dictionary<CP_Bioscan_Core, uint> bioscanCore2Index = new();
@@ -76,7 +72,7 @@ namespace ScanPosOverride.Managers
         public void OutputLevelPuzzleInfo()
         {
             List<ChainedPuzzleInstance> levelChainedPuzzleInstances = new();
-            foreach (var cpInstance in ChainedPuzzleManager.Current.m_instances) 
+            foreach (var cpInstance in ChainedPuzzleManager.Current.m_instances)
                 levelChainedPuzzleInstances.Add(cpInstance);
 
             levelChainedPuzzleInstances.Sort((c1, c2) =>
@@ -176,18 +172,16 @@ namespace ScanPosOverride.Managers
             clusterCoreIntPtr2Index.Clear();
             index2BioscanCore.Clear();
             index2ClusterCore.Clear();
-
-            ScanPosOverrideLogger.Warning("Cleared scan index");
         }
 
-        private PuzzleOverrideManager() 
+        private PuzzleOverrideManager() { }
+
+        static PuzzleOverrideManager()
         {
-            LevelAPI.OnEnterLevel += OutputLevelPuzzleInfo;
-            LevelAPI.OnLevelCleanup += Clear;
-            LevelAPI.OnBuildStart += Clear;
+            Current = new();
+            LevelAPI.OnEnterLevel += Current.OutputLevelPuzzleInfo;
+            LevelAPI.OnLevelCleanup += Current.Clear;
         }
-
-        static PuzzleOverrideManager() {}
 
         /** 
          * Summary:

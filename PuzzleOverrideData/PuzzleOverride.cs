@@ -20,8 +20,6 @@ namespace ScanPosOverride.PuzzleOverrideData
 
         public List<int> RequiredItemsIndices { get; set; } = new() { 0 };
 
-        public List<WardenObjectiveEventData> EventsOnPuzzleActivate { get; set; } = new();
-
         public List<WardenObjectiveEventData> EventsOnPuzzleSolved { get; set; } = new();
     }
 }

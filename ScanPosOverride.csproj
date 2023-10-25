@@ -29,7 +29,6 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="JSON\InjectLibUtil.cs" />
     <Compile Include="JSON\LocalizedTextConverter.cs" />
     <Compile Include="Managers\PlayerScannerManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />

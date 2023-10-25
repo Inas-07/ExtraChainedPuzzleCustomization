@@ -98,9 +98,9 @@ namespace ScanPosOverride.Patches
                 uint puzzleOverrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(childCore.Pointer);
                 if (puzzleOverrideIndex == 0) continue;
 
-                PuzzleOverride clusterTOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
+                PuzzleOverride TScanPositions = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
-                if (clusterTOverride == null || clusterTOverride.TPositions == null || clusterTOverride.TPositions.Count < 1)
+                if (TScanPositions == null || TScanPositions.TPositions == null || TScanPositions.TPositions.Count < 1)
                 {
                     ScanPosOverrideLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                     continue;
@@ -114,16 +114,10 @@ namespace ScanPosOverride.Patches
                 }
                 else if (TScanCore.m_movingComp.UsingStaticBioscanPoints)
                 {
-                    foreach (var pos in clusterTOverride.TPositions)
+                    foreach (var pos in TScanPositions.TPositions)
                         TScanCore.m_movingComp.ScanPositions.Add(pos.ToVector3());
 
-                    TScanCore.transform.position = clusterTOverride.TPositions[0].ToVector3();
-                    
-                    if (clusterTOverride.TMoveSpeedMulti > 0.0)
-                    {
-                        var TMovableComp = TScanCore.m_movingComp.Cast<CP_BasicMovable>();
-                        TMovableComp.m_movementSpeed *= clusterTOverride.TMoveSpeedMulti; 
-                    }
+                    TScanCore.transform.position = TScanPositions.TPositions[0].ToVector3();
 
                     // disable the holopath after Setup() complete.
                     __instance.m_revealWithHoloPath = false;

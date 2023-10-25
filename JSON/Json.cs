@@ -30,12 +30,6 @@ namespace ScanPosOverride.JSON
             {
                 _setting.Converters.Add(new LocalizedTextConverter());
             }
-
-            if (InjectLibUtil.IsLoaded)
-            {
-                _setting.Converters.Add(InjectLibUtil.InjectLibConnector);
-                ScanPosOverrideLogger.Log("InjectLib (AWO) support found!");
-            }
         }
 
         public static T Deserialize<T>(string json)

@@ -10,11 +10,10 @@ using MTFO.API;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.5.1")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.5.0")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency(InjectLibUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
 
     internal sealed class Plugin : BasePlugin
     {
