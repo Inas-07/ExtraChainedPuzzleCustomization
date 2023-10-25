@@ -66,7 +66,7 @@ namespace ScanPosOverride.JSON
                 file += ".json";
             }
 
-            string filePath = Path.Combine(Plugin.OVERRIDE_SCAN_POS_PATH, file);
+            string filePath = Path.Combine(Plugin.OLD_PATH, file);
 
             file = File.ReadAllText(filePath);
             config = Deserialize<T>(file);

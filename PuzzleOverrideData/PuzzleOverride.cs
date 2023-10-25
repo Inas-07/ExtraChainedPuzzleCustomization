@@ -2,7 +2,7 @@
 using GameData;
 namespace ScanPosOverride.PuzzleOverrideData
 {
-    internal sealed class PuzzleOverride
+    public class PuzzleOverride
     {
         public uint Index { get; set; }
 
