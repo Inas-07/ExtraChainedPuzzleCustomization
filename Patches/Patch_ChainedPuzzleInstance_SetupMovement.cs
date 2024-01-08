@@ -24,7 +24,7 @@ namespace ScanPosOverride.Patches
 
             if(core == null)
             {
-                ScanPosOverrideLogger.Error("Pre_SetupMovement: iChainedPuzzleCore -> CP_Bioscan_Core failed");
+                SPOLogger.Error("Pre_SetupMovement: iChainedPuzzleCore -> CP_Bioscan_Core failed");
                 return true;
             }
 
@@ -32,7 +32,7 @@ namespace ScanPosOverride.Patches
 
             if (TScanPuzzleIndex == 0)
             {
-                ScanPosOverrideLogger.Error("Did not find registered movable override for this movable scan.");
+                SPOLogger.Error("Did not find registered movable override for this movable scan.");
                 return true;
             }
 
@@ -40,13 +40,13 @@ namespace ScanPosOverride.Patches
 
             if (_override == null || _override.TPositions.Count < 1)
             {
-                ScanPosOverrideLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
+                SPOLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
                 return true;
             }
 
             _override.TPositions.ForEach(pos => movingComp.ScanPositions.Add(pos.ToVector3()));
             gameObject.transform.position = _override.TPositions[0].ToVector3();
-            ScanPosOverrideLogger.Warning("Overriding T-Scan pos!");
+            SPOLogger.Warning("Overriding T-Scan pos!");
 
             TComponent.m_amountOfPositions = _override.TPositions.Count;
 

@@ -67,7 +67,7 @@ namespace ScanPosOverride.JSON
                 }
                 catch (Exception e)
                 {
-                    ScanPosOverrideLogger.Error($"Exception thrown while reading data from MTFO_Extension_PartialData:\n{e}");
+                    SPOLogger.Error($"Exception thrown while reading data from MTFO_Extension_PartialData:\n{e}");
                 }
             }
         }

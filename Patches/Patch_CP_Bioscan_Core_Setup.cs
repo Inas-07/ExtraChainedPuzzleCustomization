@@ -49,7 +49,7 @@ namespace ScanPosOverride.Patches
                         CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
                         if (lastClusterPuzzle == null)
                         {
-                            ScanPosOverrideLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
+                            SPOLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
                         }
                         else prevPuzzlePos = lastClusterPuzzle.transform.position;
                     }
@@ -64,7 +64,7 @@ namespace ScanPosOverride.Patches
                 CP_Cluster_Core clusterOwner = owner.TryCast<CP_Cluster_Core>();
                 if (clusterOwner == null)
                 {
-                    ScanPosOverrideLogger.Error("Onwer is not neither ChainedPuzzleInstance nor CP_Cluster_Core. What r u?");
+                    SPOLogger.Error("Onwer is not neither ChainedPuzzleInstance nor CP_Cluster_Core. What r u?");
                     return;
                 }
 
@@ -73,7 +73,7 @@ namespace ScanPosOverride.Patches
                 scanOwner = clusterOwner.m_owner.TryCast<ChainedPuzzleInstance>();
                 if(scanOwner == null)
                 {
-                    ScanPosOverrideLogger.Error("Failed to cast clusterOwner.m_owner to ChainedPuzzleInstance");
+                    SPOLogger.Error("Failed to cast clusterOwner.m_owner to ChainedPuzzleInstance");
                     return;
                 }
 
@@ -120,7 +120,7 @@ namespace ScanPosOverride.Patches
                 PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
             }
             
-            ScanPosOverrideLogger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));
+            SPOLogger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));
         }
     }
 }

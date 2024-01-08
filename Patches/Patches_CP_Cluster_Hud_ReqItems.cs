@@ -26,14 +26,14 @@ namespace ScanPosOverride.Patches
 
             if (__instance.m_hud == null)
             {
-                ScanPosOverrideLogger.Error("CP_Cluster_Hud_ReqItems: replacement Cluster_hud is null.");
+                SPOLogger.Error("CP_Cluster_Hud_ReqItems: replacement Cluster_hud is null.");
                 return;
             }
 
             CP_Cluster_Hud clusterHud = __instance.m_hud.TryCast<CP_Cluster_Hud>();
             if (clusterHud == null)
             {
-                ScanPosOverrideLogger.Error("CP_Cluster_Hud_ReqItems: Find cluster owner but cannot cast m_hud to CP_Cluster_hud");
+                SPOLogger.Error("CP_Cluster_Hud_ReqItems: Find cluster owner but cannot cast m_hud to CP_Cluster_hud");
                 return;
             }
 
@@ -43,7 +43,7 @@ namespace ScanPosOverride.Patches
                 if (__instance.m_reqItems[index] != null)
                     reqItemNames[index] = __instance.m_reqItems[index].PublicName;
                 else
-                    ScanPosOverrideLogger.Error("Post_CP_Bioscan_Core_AddRequiredItems: CP_Bioscan_Core " + __instance.name + " has a missing m_reqItem! " + index);
+                    SPOLogger.Error("Post_CP_Bioscan_Core_AddRequiredItems: CP_Bioscan_Core " + __instance.name + " has a missing m_reqItem! " + index);
             }
 
             List<bool> clusterReqItemEnabled;
@@ -92,7 +92,7 @@ namespace ScanPosOverride.Patches
 
             if (!clustersChildrenReqItemEnabled.ContainsKey(__instance.Pointer) || !clustersChildrenReqItemNames.ContainsKey(__instance.Pointer))
             {
-                ScanPosOverrideLogger.Error("CP_Cluster_Hud_UpdateDataFor: Found registered reqItemStatus but ReqItemEnabled or ReqItemNames is missing!");
+                SPOLogger.Error("CP_Cluster_Hud_UpdateDataFor: Found registered reqItemStatus but ReqItemEnabled or ReqItemNames is missing!");
                 return;
             }
 

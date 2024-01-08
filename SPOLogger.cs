@@ -1,11 +1,9 @@
 ﻿using BepInEx.Core.Logging.Interpolation;
 using BepInEx.Logging;
-using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace ScanPosOverride
 {
-    internal static class ScanPosOverrideLogger
+    internal static class SPOLogger
     {
         private static readonly ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource("ScanPosOverride");
 

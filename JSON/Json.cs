@@ -24,7 +24,7 @@ namespace ScanPosOverride.JSON
             {
                 _setting.Converters.Add(MTFOPartialDataUtil.PersistentIDConverter);
                 _setting.Converters.Add(MTFOPartialDataUtil.LocalizedTextConverter);
-                ScanPosOverrideLogger.Log("PartialData Support Found!");
+                SPOLogger.Log("PartialData Support Found!");
             }
             else
             {

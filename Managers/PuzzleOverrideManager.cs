@@ -106,6 +106,11 @@ namespace ScanPosOverride.Managers
                         chainedPuzzlesInfo.Append($"puzzle index: {i}\n");
                         chainedPuzzlesInfo.Append("type: CP_Bioscan_Core\n");
                         chainedPuzzlesInfo.Append($"PuzzleOverrideIndex: {puzzleOverrideIndex}\n");
+
+                        var bioscanCore = core.Cast<CP_Bioscan_Core>();
+                        var scanner = bioscanCore.PlayerScanner.Cast<CP_PlayerScanner>();
+                        chainedPuzzlesInfo.Append($"Position: {bioscanCore.m_position}\n");
+                        chainedPuzzlesInfo.Append($"Radius: {scanner.Radius}\n");
                     }
 
                     // CP_Cluster_Core
@@ -115,7 +120,7 @@ namespace ScanPosOverride.Managers
                         CP_Cluster_Core clusterCore = core.TryCast<CP_Cluster_Core>();
                         if (clusterCore == null)
                         {
-                            ScanPosOverrideLogger.Error("Found cluster core Pointer, but TryCast failed.");
+                            SPOLogger.Error("Found cluster core Pointer, but TryCast failed.");
                             continue;
                         }
 
@@ -128,7 +133,7 @@ namespace ScanPosOverride.Managers
                             iChainedPuzzleCore clusterChildCore = clusterCore.m_childCores[j];
                             if (!bioscanCoreIntPtr2Index.ContainsKey(clusterChildCore.Pointer))
                             {
-                                ScanPosOverrideLogger.Error("Unregistered clustered iChainedPuzzleCore found...");
+                                SPOLogger.Error("Unregistered clustered iChainedPuzzleCore found...");
                                 continue;
                             }
 
@@ -136,19 +141,24 @@ namespace ScanPosOverride.Managers
                             chainedPuzzlesInfo.Append($"puzzle index: {j}\n");
                             chainedPuzzlesInfo.Append("type: CP_Bioscan_Core\n");
                             chainedPuzzlesInfo.Append($"PuzzleOverrideIndex: {puzzleOverrideIndex}\n");
+                            
+                            var bioscanCore = clusterChildCore.Cast<CP_Bioscan_Core>();
+                            var scanner = bioscanCore.PlayerScanner.Cast<CP_PlayerScanner>();
+                            chainedPuzzlesInfo.Append($"Position: {bioscanCore.m_position}\n");
+                            chainedPuzzlesInfo.Append($"Radius: {scanner.Radius}\n");
                         }
                         chainedPuzzlesInfo.Append("=== Clustered puzzles END ===\n");
                     }
                     else
                     {
-                        ScanPosOverrideLogger.Error("Unregistered iChainedPuzzleCore found...");
+                        SPOLogger.Error("Unregistered iChainedPuzzleCore found...");
                     }
 
                 }
                 chainedPuzzlesInfo.Append('\n');
             }
 
-            ScanPosOverrideLogger.Debug(chainedPuzzlesInfo.ToString());
+            SPOLogger.Debug(chainedPuzzlesInfo.ToString());
         }
 
         public uint GetBioscanCoreOverrideIndex(CP_Bioscan_Core core) => !bioscanCore2Index.ContainsKey(core) ? 0u : bioscanCore2Index[core];
@@ -204,7 +214,7 @@ namespace ScanPosOverride.Managers
             }
             else
             {
-                ScanPosOverrideLogger.Error("Failed to find CP_BioScan_Core owner (instance of ChainedPuzzleInstance).");
+                SPOLogger.Error("Failed to find CP_BioScan_Core owner (instance of ChainedPuzzleInstance).");
                 return null;
             }
         }

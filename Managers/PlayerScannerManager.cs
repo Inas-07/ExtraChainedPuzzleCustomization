@@ -43,7 +43,7 @@ namespace ScanPosOverride.Managers
             {
                 if (childScanners[childIndex] != null)
                 {
-                    ScanPosOverrideLogger.Error("SetupConcurrentClusterScanners: Duplicate child scanner for child scan. ??");
+                    SPOLogger.Error("SetupConcurrentClusterScanners: Duplicate child scanner for child scan. ??");
                     continue;
                 }
 
@@ -52,14 +52,14 @@ namespace ScanPosOverride.Managers
                 CP_Bioscan_Core bioscanCore = IChildCore.TryCast<CP_Bioscan_Core>();
                 if (bioscanCore == null)
                 {
-                    ScanPosOverrideLogger.Error("SetupConcurrentClusterScanners: Failed to cast child to CP_Bioscan_Core");
+                    SPOLogger.Error("SetupConcurrentClusterScanners: Failed to cast child to CP_Bioscan_Core");
                     continue;
                 }
 
                 CP_PlayerScanner scanner = bioscanCore.PlayerScanner.TryCast<CP_PlayerScanner>();
                 if (scanner == null)
                 {
-                    ScanPosOverrideLogger.Error("SetupConcurrentClusterScanners: Failed to cast CP_Bioscan_Core.PlayerScanner to CP_PlayerScanner");
+                    SPOLogger.Error("SetupConcurrentClusterScanners: Failed to cast CP_Bioscan_Core.PlayerScanner to CP_PlayerScanner");
                     continue;
                 }
 
@@ -144,7 +144,7 @@ namespace ScanPosOverride.Managers
                 CP_PlayerScanner scanner = GetCacheScanner(core);
                 if(scanner == null)
                 {
-                    ScanPosOverrideLogger.Error($"GetCacheOriginalScanSpeed: cannot get scanner for this CP_Bioscan_Core");
+                    SPOLogger.Error($"GetCacheOriginalScanSpeed: cannot get scanner for this CP_Bioscan_Core");
                     return ZERO_SCAN_SPEED;
                 }
 
@@ -178,7 +178,7 @@ namespace ScanPosOverride.Managers
         {
             if(ConcurrentClusterStateMutex == null)
             {
-                ScanPosOverrideLogger.Error("ConcurrentCluster: scan mutex uninitialized.");
+                SPOLogger.Error("ConcurrentCluster: scan mutex uninitialized.");
                 return false;
             }
 
@@ -186,7 +186,7 @@ namespace ScanPosOverride.Managers
             {
                 if(!ConcurrentScanClusterParents.ContainsKey(core.Pointer))
                 {
-                    ScanPosOverrideLogger.Error("ConcurrentClusterShouldProgress: failed to find cluster parent!");
+                    SPOLogger.Error("ConcurrentClusterShouldProgress: failed to find cluster parent!");
                     ConcurrentClusterStateMutex.ReleaseMutex();
                     return false;
                 }
@@ -194,7 +194,7 @@ namespace ScanPosOverride.Managers
                 CP_Cluster_Core clusterParent = ConcurrentScanClusterParents[core.Pointer];
                 if (!ConcurrentClusterChildScanState.ContainsKey(clusterParent))
                 {
-                    ScanPosOverrideLogger.Error("ConcurrentClusterShouldProgress: ConcurrentClusterChildScanState initialization error!");
+                    SPOLogger.Error("ConcurrentClusterShouldProgress: ConcurrentClusterChildScanState initialization error!");
                     ConcurrentClusterStateMutex.ReleaseMutex();
                     return false;
                 }
@@ -220,7 +220,7 @@ namespace ScanPosOverride.Managers
             }
             else
             {
-                ScanPosOverrideLogger.Debug("ConcurrentCluster: Failed to acquire scan mutex.");
+                SPOLogger.Debug("ConcurrentCluster: Failed to acquire scan mutex.");
                 return false;
             }
         }

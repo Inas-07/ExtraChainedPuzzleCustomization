@@ -20,6 +20,12 @@ namespace ScanPosOverride.Patches
         {
             bool IsConcurrentCluster = PlayerScannerManager.Current.IsConcurrentCluster(__instance);
 
+            // DEBUG:
+            if(IsConcurrentCluster && __instance.m_reqItemsEnabled)
+            {
+                SPOLogger.Warning($"OnSyncStateChange: status - {status}, playersInScan - {playersInScan.Count}, progress: {progress}");
+            }
+
             if (status != eBioscanStatus.Scanning)
             {
                 if (IsConcurrentCluster)
@@ -29,7 +35,7 @@ namespace ScanPosOverride.Patches
                         var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
                         if(clusterParent == null)
                         {
-                            ScanPosOverrideLogger.Error("Cannot find parent cluster core! The concurrent cluster may fail!");
+                            SPOLogger.Error("Cannot find parent cluster core! The concurrent cluster may fail!");
                         }
                         else
                         {
@@ -56,7 +62,7 @@ namespace ScanPosOverride.Patches
 
             if (scanner == null)
             {
-                ScanPosOverrideLogger.Error("Null CP_PlayerScanner");
+                SPOLogger.Error("Null CP_PlayerScanner");
                 return;
             }
 
@@ -127,7 +133,7 @@ namespace ScanPosOverride.Patches
                 if(IsConcurrentCluster)
                 {
                     var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                    if (clusterParent == null) ScanPosOverrideLogger.Error("null clusterParent");
+                    if (clusterParent == null) SPOLogger.Error("null clusterParent");
 
                     PlayerScannerManager.Current.RestoreConcurrentClusterScanSpeed(clusterParent);
                 }
@@ -152,7 +158,7 @@ namespace ScanPosOverride.Patches
                 if (IsConcurrentCluster)
                 {
                     var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                    if (clusterParent == null) ScanPosOverrideLogger.Error("null clusterParent");
+                    if (clusterParent == null) SPOLogger.Error("null clusterParent");
 
                     PlayerScannerManager.Current.ZeroConcurrentClusterScanSpeed(clusterParent);
                 }
