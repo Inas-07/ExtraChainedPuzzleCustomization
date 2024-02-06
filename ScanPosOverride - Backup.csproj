@@ -31,7 +31,6 @@
   <ItemGroup>
     <Compile Include="JSON\InjectLibUtil.cs" />
     <Compile Include="JSON\LocalizedTextConverter.cs" />
-    <Compile Include="JSON\MyVector3Converter.cs" />
     <Compile Include="Managers\PlayerScannerManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_OnSyncStateChanged.cs" />

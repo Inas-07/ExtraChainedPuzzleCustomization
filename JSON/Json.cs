@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.IO;
+using GTFO.API.JSON.Converters;
 
 namespace ScanPosOverride.JSON
 {
@@ -19,7 +20,7 @@ namespace ScanPosOverride.JSON
         static Json()
         {
             _setting.Converters.Add(new JsonStringEnumConverter());
-
+            _setting.Converters.Add(new MyVector3Converter());
             if (MTFOPartialDataUtil.IsLoaded && MTFOPartialDataUtil.Initialized)
             {
                 _setting.Converters.Add(MTFOPartialDataUtil.PersistentIDConverter);
@@ -29,6 +30,12 @@ namespace ScanPosOverride.JSON
             else
             {
                 _setting.Converters.Add(new LocalizedTextConverter());
+            }
+
+            if (InjectLibUtil.IsLoaded)
+            {
+                _setting.Converters.Add(InjectLibUtil.InjectLibConnector);
+                SPOLogger.Log("InjectLib (AWO) support found!");
             }
         }
 
