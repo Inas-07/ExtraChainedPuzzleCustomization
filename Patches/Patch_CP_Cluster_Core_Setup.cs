@@ -1,8 +1,10 @@
 ﻿using ChainedPuzzles;
 using GameData;
+using GTFO.API.Extensions;
 using HarmonyLib;
 using ScanPosOverride.Managers;
 using ScanPosOverride.PuzzleOverrideData;
+using System;
 using UnityEngine;
 
 namespace ScanPosOverride.Patches
@@ -133,11 +135,42 @@ namespace ScanPosOverride.Patches
             uint overrideIndex = PuzzleOverrideManager.Current.GetClusterCoreOverrideIndex(__instance);
             if (overrideIndex == 0) return;
 
-            PuzzleOverride overrideData = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
-            if(overrideData == null || overrideData.ConcurrentCluster == false) return;
+            PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
+            if(def == null) return;
 
-            PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
-            SPOLogger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
+            if(def.ConcurrentCluster)
+            {
+                PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
+                SPOLogger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
+            }
+
+            if(def.EventsOnClusterProgress.Count > 0)
+            {
+                foreach(var child in __instance.m_childCores)
+                {
+                    child.add_OnPuzzleDone(new System.Action<int>(CheckEventsOnClusterProgress));
+                }
+
+                void CheckEventsOnClusterProgress(int puzzleIndex)
+                {
+                    int cnt = 0;
+                    for (int i = 0; i < __instance.m_childCores.Length; i++)
+                    {
+                        if (__instance.m_childCores[i].IsFinished())
+                        {
+                            cnt += 1;
+                        }
+                    }
+
+                    foreach(var eop in def.EventsOnClusterProgress)
+                    {
+                        if (eop.Count == cnt)
+                        {
+                            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(eop.Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+                        }
+                    }
+                }
+            }
         }
     }
 }

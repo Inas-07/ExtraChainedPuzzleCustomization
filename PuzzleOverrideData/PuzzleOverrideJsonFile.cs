@@ -7,6 +7,6 @@ namespace ScanPosOverride.PuzzleOverrideData
     {
         public uint MainLevelLayout { get; set; }
 
-        public List<PuzzleOverride> Puzzles { get; set; } = new List<PuzzleOverride>();
+        public List<PuzzleOverride> Puzzles { get; set; } = new List<PuzzleOverride>() { new() };
     }
 }

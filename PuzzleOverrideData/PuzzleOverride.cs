@@ -1,8 +1,23 @@
 ﻿using System.Collections.Generic;
 using GameData;
+
 namespace ScanPosOverride.PuzzleOverrideData
 {
-    internal sealed class PuzzleOverride
+    public class BioscanProgressEvent 
+    {
+        public float Progress { get; set; } = -1.0f;
+
+        public List<WardenObjectiveEventData> Events { get; set; } = new();
+    }
+
+    public class ClusterProgressEvent
+    {
+        public int Count { get; set; } = -1;
+
+        public List<WardenObjectiveEventData> Events { get; set; } = new();
+    }
+
+    public class PuzzleOverride
     {
         public uint Index { get; set; }
 
@@ -15,6 +30,10 @@ namespace ScanPosOverride.PuzzleOverrideData
         public bool ConcurrentCluster { get; set; } = false;
 
         public float TMoveSpeedMulti { get; set; } = -1.0f;
+
+        public List<BioscanProgressEvent> EventsOnBioscanProgress { get; set; } = new() { new() };
+
+        public List<ClusterProgressEvent> EventsOnClusterProgress { get; set; } = new() { new() };
 
         public List<Vec3> TPositions { get; set; } = new List<Vec3>();
 

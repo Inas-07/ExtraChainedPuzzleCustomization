@@ -7,10 +7,11 @@ using ScanPosOverride.JSON;
 using GTFO.API.Utilities;
 using HarmonyLib;
 using MTFO.API;
+using UnityEngine;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.5.3")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.5.5")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
@@ -61,6 +62,7 @@ namespace ScanPosOverride
                         continue;
                     }
 
+                    puzzleToOverride.EventsOnBioscanProgress.Sort((e1, e2) => Mathf.RoundToInt(e1.Progress - e2.Progress));
                     levelPuzzleToOverride.Add(puzzleToOverride.Index, puzzleToOverride);
                 }
 
@@ -101,6 +103,7 @@ namespace ScanPosOverride
                         continue;
                     }
 
+                    puzzleToOverride.EventsOnBioscanProgress.Sort((e1, e2) => Mathf.RoundToInt(e1.Progress - e2.Progress));
                     levelPuzzleToOverride.Add(puzzleToOverride.Index, puzzleToOverride);
                 }
 

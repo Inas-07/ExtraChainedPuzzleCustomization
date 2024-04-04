@@ -6,6 +6,10 @@ using ScanPosOverride.PuzzleOverrideData;
 using GameData;
 using ScanPosOverride.Managers;
 
+using Il2cppPlayerList = Il2CppSystem.Collections.Generic.List<Player.PlayerAgent>;
+using Il2cppBoolArray = Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<bool>;
+using GTFO.API.Extensions;
+
 namespace ScanPosOverride.Patches
 {
     [HarmonyPatch]
@@ -121,6 +125,54 @@ namespace ScanPosOverride.Patches
             }
             
             SPOLogger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.Setup))]
+        private static void Post_CP_Bioscan_Core_Setup(CP_Bioscan_Core __instance)
+        {
+            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(__instance);
+            PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
+
+            //TODO: execute events on progress 
+            if (def != null)
+            {
+                int i = 0; // def.EventsOnProgress[i] are the events that should be executed next
+
+                __instance.m_sync.add_OnSyncStateChange(new System.Action<eBioscanStatus, float, Il2cppPlayerList, int, Il2cppBoolArray, bool>(CheckBioscanEventsOnProgress));
+                
+                void CheckBioscanEventsOnProgress(eBioscanStatus status, float progress,
+                    Il2cppPlayerList playersInScan, int playerMax, Il2cppBoolArray reqItemStatus,
+                    bool isDropinState)
+                {
+                    if (isDropinState)
+                    {
+                        while (i < def.EventsOnBioscanProgress.Count)
+                        {
+                            var curEOP = def.EventsOnBioscanProgress[i];
+                            if (curEOP.Progress > progress)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                i++;
+                            }
+                        }
+                        return;
+                    }
+
+                    if (i < def.EventsOnBioscanProgress.Count)
+                    {
+                        var curEOP = def.EventsOnBioscanProgress[i];
+                        if (curEOP.Progress < progress) 
+                        {
+                            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+                            i += 1;
+                        }
+                    }
+                }
+            }
         }
     }
 }
