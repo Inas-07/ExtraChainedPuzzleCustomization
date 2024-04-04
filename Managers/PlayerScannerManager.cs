@@ -39,12 +39,12 @@ namespace ScanPosOverride.Managers
         internal bool RegisterConcurrentCluster(CP_Cluster_Core core)
         {
             if (CCCores.ContainsKey(core.Pointer)) return false;
-            List<CP_PlayerScanner> childScanners = Enumerable.Repeat<CP_PlayerScanner>(null, core.m_amountOfPuzzles).ToList();
+            List<CP_PlayerScanner> scanners = Enumerable.Repeat<CP_PlayerScanner>(null, core.m_amountOfPuzzles).ToList();
             List<CP_Bioscan_Core> childCores = Enumerable.Repeat<CP_Bioscan_Core>(null, core.m_amountOfPuzzles).ToList();
 
             for (int childIndex = 0; childIndex < core.m_childCores.Count; childIndex++)
             {
-                if (childScanners[childIndex] != null)
+                if (scanners[childIndex] != null)
                 {
                     SPOLogger.Error("SetupConcurrentClusterScanners: Duplicate child scanner for child scan. ??");
                     continue;
@@ -52,23 +52,23 @@ namespace ScanPosOverride.Managers
 
                 var IChildCore = core.m_childCores[childIndex];
 
-                CP_Bioscan_Core bioscanCore = IChildCore.TryCast<CP_Bioscan_Core>();
-                if (bioscanCore == null)
+                CP_Bioscan_Core child = IChildCore.TryCast<CP_Bioscan_Core>();
+                if (child == null)
                 {
                     SPOLogger.Error("SetupConcurrentClusterScanners: Failed to cast child to CP_Bioscan_Core");
                     continue;
                 }
 
-                CP_PlayerScanner scanner = bioscanCore.PlayerScanner.TryCast<CP_PlayerScanner>();
+                CP_PlayerScanner scanner = child.PlayerScanner.TryCast<CP_PlayerScanner>();
                 if (scanner == null)
                 {
                     SPOLogger.Error("SetupConcurrentClusterScanners: Failed to cast CP_Bioscan_Core.PlayerScanner to CP_PlayerScanner");
                     continue;
                 }
 
-                childScanners[childIndex] = scanner;
+                scanners[childIndex] = scanner;
                 Scanners.Add(IChildCore.Pointer, scanner);
-                childCores[childIndex] = bioscanCore;
+                childCores[childIndex] = child;
 
                 if (!OriginalClusterScanSpeeds.ContainsKey(core.Pointer))
                 {
@@ -79,7 +79,7 @@ namespace ScanPosOverride.Managers
                 }
             }
 
-            CCCores.Add(core.Pointer, childScanners);
+            CCCores.Add(core.Pointer, scanners);
             CCChildCores.Add(core.Pointer, childCores);
             CCChildState.Add(core.Pointer, new());
             return true;
@@ -226,6 +226,8 @@ namespace ScanPosOverride.Managers
                 child.m_sync.SetStateData(eBioscanStatus.Finished);
             }
         }
+
+        public List<CP_PlayerScanner> GetCCChildrenScanner(CP_Cluster_Core parent) => CCCores.ContainsKey(parent.Pointer) ? CCCores[parent.Pointer] : null;
 
         public void Init()
         {

@@ -2,6 +2,7 @@
 using GameData;
 using GTFO.API.Extensions;
 using HarmonyLib;
+using ScanPosOverride.Component;
 using ScanPosOverride.Managers;
 using ScanPosOverride.PuzzleOverrideData;
 using System;
@@ -140,8 +141,29 @@ namespace ScanPosOverride.Patches
 
             if(def.ConcurrentCluster)
             {
-                PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
-                SPOLogger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
+                if (2 <= __instance.m_childCores.Count && __instance.m_childCores.Count <= 4)
+                {
+                    var parentHud = __instance.m_hud.Cast<CP_Bioscan_Hud>();
+                    var cchud = parentHud.gameObject.AddComponent<ConcurrentClusterHud>();
+                    cchud.parent = __instance;
+                    cchud.parentHud = parentHud;
+                    cchud.def = def;
+                    if(cchud.Setup())
+                    {
+                        PlayerScannerManager.Current.RegisterConcurrentCluster(__instance);
+                        SPOLogger.Warning("Setting up CP_Cluster_Core as Concurrent Cluster!");
+                    }
+                    else
+                    {
+                        SPOLogger.Warning("Concurrent Cluster: faild to setup");
+                    }
+                }
+
+                else
+                {
+                    SPOLogger.Error("Trying to setup concurrent cluster, " +
+                        $"but the cluster scan has {__instance.m_childCores.Count}, which is senseless or is impossible for 4 players to complete");
+                }
             }
 
             if(def.EventsOnClusterProgress.Count > 0)

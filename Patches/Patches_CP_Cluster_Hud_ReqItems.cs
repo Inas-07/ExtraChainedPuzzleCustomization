@@ -21,8 +21,8 @@ namespace ScanPosOverride.Patches
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.AddRequiredItems))]
         private static void Post_CP_Bioscan_Core_AddRequiredItems(CP_Bioscan_Core __instance, Il2CppReferenceArray<iWardenObjectiveItem> requiredItems)
         {
-            CP_Cluster_Core ClusterOwner = __instance.Owner.TryCast<CP_Cluster_Core>();
-            if (ClusterOwner == null) return;
+            CP_Cluster_Core parent = __instance.Owner.TryCast<CP_Cluster_Core>();
+            if (parent == null) return;
 
             if (__instance.m_hud == null)
             {
@@ -30,8 +30,8 @@ namespace ScanPosOverride.Patches
                 return;
             }
 
-            CP_Cluster_Hud clusterHud = __instance.m_hud.TryCast<CP_Cluster_Hud>();
-            if (clusterHud == null)
+            CP_Cluster_Hud hud = __instance.m_hud.TryCast<CP_Cluster_Hud>();
+            if (hud == null)
             {
                 SPOLogger.Error("CP_Cluster_Hud_ReqItems: Find cluster owner but cannot cast m_hud to CP_Cluster_hud");
                 return;
@@ -48,17 +48,17 @@ namespace ScanPosOverride.Patches
 
             List<bool> clusterReqItemEnabled;
             List<string[]> clusterReqItemNames;
-            if(clustersChildrenReqItemEnabled.ContainsKey(clusterHud.Pointer))
+            if(clustersChildrenReqItemEnabled.ContainsKey(hud.Pointer))
             {
-                clusterReqItemEnabled = clustersChildrenReqItemEnabled[clusterHud.Pointer];
-                clusterReqItemNames = clustersChildrenReqItemNames[clusterHud.Pointer];
+                clusterReqItemEnabled = clustersChildrenReqItemEnabled[hud.Pointer];
+                clusterReqItemNames = clustersChildrenReqItemNames[hud.Pointer];
             }
             else
             {
-                clusterReqItemEnabled = Enumerable.Repeat(false, ClusterOwner.NRofPuzzles()).ToList();
-                clusterReqItemNames = Enumerable.Repeat(new string[0], ClusterOwner.NRofPuzzles()).ToList();
-                clustersChildrenReqItemEnabled.Add(clusterHud.Pointer, clusterReqItemEnabled);
-                clustersChildrenReqItemNames.Add(clusterHud.Pointer, clusterReqItemNames);
+                clusterReqItemEnabled = Enumerable.Repeat(false, parent.NRofPuzzles()).ToList();
+                clusterReqItemNames = Enumerable.Repeat(new string[0], parent.NRofPuzzles()).ToList();
+                clustersChildrenReqItemEnabled.Add(hud.Pointer, clusterReqItemEnabled);
+                clustersChildrenReqItemNames.Add(hud.Pointer, clusterReqItemNames);
             }
 
             clusterReqItemEnabled[__instance.m_puzzleIndex] = __instance.m_reqItemsEnabled;
