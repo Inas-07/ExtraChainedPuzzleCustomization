@@ -1,15 +1,12 @@
 ﻿using ChainedPuzzles;
 using Il2CppInterop.Runtime.Injection;
 using Player;
-using ScanPosOverride.Managers;
 using ScanPosOverride.PuzzleOverrideData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
-using static RootMotion.FinalIK.RagdollUtility;
 
 namespace ScanPosOverride.Component
 {
@@ -25,7 +22,7 @@ namespace ScanPosOverride.Component
 
         private StringBuilder displayText = new();
 
-        private bool m_Setup = false;
+        private bool m_isValid = false;
         
         public PlayerCountRequirement playerCountReq { get; private set; } = PlayerCountRequirement.INVALID;
 
@@ -112,13 +109,11 @@ namespace ScanPosOverride.Component
                     {
                         case PlayerCountRequirement.ANY:
                         case PlayerCountRequirement.SOLO:
-                            //text = "[{}] | [{}]";
-                            m_Setup = true;     
+                            m_isValid = true;     
                             break;
                         
                         case PlayerCountRequirement.DUO:     
-                            //text = "[{},{}] | [{},{}]";     
-                            m_Setup = true;     
+                            m_isValid = true;     
                             break;
                     }
 
@@ -129,8 +124,7 @@ namespace ScanPosOverride.Component
                     {
                         case PlayerCountRequirement.ANY:
                         case PlayerCountRequirement.SOLO: 
-                            //text = "[{}] | [{}] | [{}] | [{}]"; 
-                            m_Setup = true;     
+                            m_isValid = true;     
                             break;
                     }
 
@@ -141,15 +135,14 @@ namespace ScanPosOverride.Component
                     {
                         case PlayerCountRequirement.ANY:
                         case PlayerCountRequirement.SOLO: 
-                            //text = "[{}] | [{}] | [{}]";
-                            m_Setup = true;
+                            m_isValid = true;
                             break;
                     }
 
                     break;
             }
 
-            if (!m_Setup)
+            if (!m_isValid)
             {
                 SPOLogger.Error($"ConcurrentCluster setup: Something went wrong! PlayerCountRequirement: {playerCountReq}, children num: {parent.m_childCores.Count}");
                 return false;
@@ -166,12 +159,12 @@ namespace ScanPosOverride.Component
 
         void LateUpdate()
         {
-            if (!m_Setup || !parentHud.m_visible || !parentHud.m_isClosestToPlayer) return;
+            if (!m_isValid || !parentHud.m_visible || !parentHud.m_isClosestToPlayer) return;
 
             displayText.Clear();
             displayText.AppendLine().Append("<color=white>");
 
-            for(int i = 0; i < children.Count; i++)
+            for (int i = 0; i < children.Count; i++)
             {
                 int cnt = 0;
                 var child = children[i];
@@ -185,26 +178,53 @@ namespace ScanPosOverride.Component
 
                 playerInScanCount[i] = cnt;
 
-                displayText.Append(ROMAN[i]).Append(": ");
-                displayText.Append("[");
+                const string ORANGE = "orange";
+                const string WHITE = "white";
+
+                string childText = string.Empty;
+                string childColor = string.Empty;
                 switch(playerCountReq)
                 {
-                    case PlayerCountRequirement.ANY: 
-                        for(int n = 0; n < cnt; n++)
+                    case PlayerCountRequirement.ANY:
+                        switch (cnt)
                         {
-                            displayText.Append($"{(n != 0 ? "," : "")}{'A' + n}");
+                            case 0: childText = " "; break;
+                            case 1: childText = "A"; break;
+                            case 2: childText = "A,B"; break;
+                            case 3: childText = "A,B,C"; break;
+                            case 4: childText = "A,B,C,D"; break;
                         }
 
+                        childColor = cnt > 0 ? WHITE : ORANGE;                        
                         break;
 
                     case PlayerCountRequirement.SOLO:
                         switch (cnt)
                         {
-                            case 0: displayText.Append(" "); break;
-                            case 1: displayText.Append("A"); break;
-                            case 2: displayText.Append("A,<color=red>B</color>"); break;
-                            case 3: displayText.Append("A,<color=red>B</color>,<color=red>C</color>"); break;
-                            case 4: displayText.Append("A,<color=red>B</color>,<color=red>C</color>,<color=red>D</color>"); break;
+                            case 0: 
+                                childText = " "; 
+                                childColor = ORANGE; 
+                                break;
+                            
+                            case 1: 
+                                childText = "A"; 
+                                childColor = WHITE;  
+                                break;
+                            
+                            case 2: 
+                                childText = "A,<color=red>B</color>"; 
+                                childColor = ORANGE; 
+                                break;
+                            
+                            case 3: 
+                                childText = "A,<color=red>B</color>,<color=red>C</color>"; 
+                                childColor = ORANGE; 
+                                break;
+                            
+                            case 4: 
+                                childText = "A,<color=red>B</color>,<color=red>C</color>,<color=red>D</color>"; 
+                                childColor = ORANGE; 
+                                break;
                         }
 
                         break;
@@ -212,16 +232,38 @@ namespace ScanPosOverride.Component
                     case PlayerCountRequirement.DUO:
                         switch (cnt) 
                         {
-                            case 0: displayText.Append(","); break;
-                            case 1: displayText.Append("A,"); break;
-                            case 2: displayText.Append("A,B"); break;
-                            case 3: displayText.Append("A,B,<color=red>C</color>"); break;
-                            case 4: displayText.Append("A,B,<color=red>C</color>,<color=red>D</color>"); break;
+                            case 0: 
+                                childText = " , "; 
+                                childColor = ORANGE;
+                                break;
+                            
+                            case 1: childText = "A, "; 
+                                childColor = ORANGE;
+                                break;
+                            
+                            case 2: 
+                                childText = "A,B"; 
+                                childColor = WHITE;
+                                break;
+
+                            case 3: 
+                                childText = "A,B,<color=red>C</color>"; 
+                                childColor = ORANGE;
+                                break;
+                            case 4: 
+                                childText = "A,B,<color=red>C</color>,<color=red>D</color>"; 
+                                childColor = ORANGE;
+                                break;
                         }
 
                         break;
                 }
-                displayText.Append("]");
+                displayText.Append($"<color={childColor}>")
+                    .Append(ROMAN[i]).Append(": ")
+                    .Append("[")
+                    .Append(childText)
+                    .Append("]")
+                    .Append($"</color={childColor}>");
 
                 if (i != children.Count - 1)
                 {
@@ -241,7 +283,7 @@ namespace ScanPosOverride.Component
             def = null;
             children.Clear();
             children = null;
-            m_Setup = false;
+            m_isValid = false;
             playerInScanCount = null;
             displayText = null;
         }

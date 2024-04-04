@@ -11,11 +11,12 @@ namespace ScanPosOverride.Patches
     internal class Patches_CP_Cluster_Hud_ReqItems
     {
         // System.IntPtr is Cluster hud
-        private static Dictionary<System.IntPtr, List<bool>> clustersChildrenReqItemEnabled = new();
-        private static Dictionary<System.IntPtr, List<string[]>> clustersChildrenReqItemNames = new();
+        private static Dictionary<System.IntPtr, List<bool>> childrenReqItemEnabled { get; } = new();
+
+        private static Dictionary<System.IntPtr, List<string[]>> clustersChildrenReqItemNames { get; } = new();
 
         // patch for SetRequiredItemData
-        private static Dictionary<System.IntPtr, List<Il2CppStructArray<bool>>> clustersChildrenReqItemsStatus = new();
+        private static Dictionary<System.IntPtr, List<Il2CppStructArray<bool>>> clustersChildrenReqItemsStatus { get; } = new();
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.AddRequiredItems))]
@@ -30,12 +31,7 @@ namespace ScanPosOverride.Patches
                 return;
             }
 
-            CP_Cluster_Hud hud = __instance.m_hud.TryCast<CP_Cluster_Hud>();
-            if (hud == null)
-            {
-                SPOLogger.Error("CP_Cluster_Hud_ReqItems: Find cluster owner but cannot cast m_hud to CP_Cluster_hud");
-                return;
-            }
+            CP_Cluster_Hud hud = __instance.m_hud.Cast<CP_Cluster_Hud>();
 
             string[] reqItemNames = new string[requiredItems.Count];
             for (int index = 0; index < __instance.m_reqItems.Count; ++index)
@@ -46,22 +42,22 @@ namespace ScanPosOverride.Patches
                     SPOLogger.Error("Post_CP_Bioscan_Core_AddRequiredItems: CP_Bioscan_Core " + __instance.name + " has a missing m_reqItem! " + index);
             }
 
-            List<bool> clusterReqItemEnabled;
+            List<bool> reqItemEnabled;
             List<string[]> clusterReqItemNames;
-            if(clustersChildrenReqItemEnabled.ContainsKey(hud.Pointer))
+            if(childrenReqItemEnabled.ContainsKey(hud.Pointer))
             {
-                clusterReqItemEnabled = clustersChildrenReqItemEnabled[hud.Pointer];
+                reqItemEnabled = childrenReqItemEnabled[hud.Pointer];
                 clusterReqItemNames = clustersChildrenReqItemNames[hud.Pointer];
             }
             else
             {
-                clusterReqItemEnabled = Enumerable.Repeat(false, parent.NRofPuzzles()).ToList();
+                reqItemEnabled = Enumerable.Repeat(false, parent.NRofPuzzles()).ToList();
                 clusterReqItemNames = Enumerable.Repeat(new string[0], parent.NRofPuzzles()).ToList();
-                clustersChildrenReqItemEnabled.Add(hud.Pointer, clusterReqItemEnabled);
+                childrenReqItemEnabled.Add(hud.Pointer, reqItemEnabled);
                 clustersChildrenReqItemNames.Add(hud.Pointer, clusterReqItemNames);
             }
 
-            clusterReqItemEnabled[__instance.m_puzzleIndex] = __instance.m_reqItemsEnabled;
+            reqItemEnabled[__instance.m_puzzleIndex] = __instance.m_reqItemsEnabled;
             clusterReqItemNames[__instance.m_puzzleIndex] = reqItemNames;
         }
 
@@ -90,7 +86,7 @@ namespace ScanPosOverride.Patches
         {
             if (!clustersChildrenReqItemsStatus.ContainsKey(__instance.Pointer)) return;
 
-            if (!clustersChildrenReqItemEnabled.ContainsKey(__instance.Pointer) || !clustersChildrenReqItemNames.ContainsKey(__instance.Pointer))
+            if (!childrenReqItemEnabled.ContainsKey(__instance.Pointer) || !clustersChildrenReqItemNames.ContainsKey(__instance.Pointer))
             {
                 SPOLogger.Error("CP_Cluster_Hud_UpdateDataFor: Found registered reqItemStatus but ReqItemEnabled or ReqItemNames is missing!");
                 return;
@@ -98,7 +94,7 @@ namespace ScanPosOverride.Patches
 
             var reqItemStatus = clustersChildrenReqItemsStatus[__instance.Pointer][index];
 
-            __instance.m_hud.SetupRequiredItems(clustersChildrenReqItemEnabled[__instance.Pointer][index], clustersChildrenReqItemNames[__instance.Pointer][index]);
+            __instance.m_hud.SetupRequiredItems(childrenReqItemEnabled[__instance.Pointer][index], clustersChildrenReqItemNames[__instance.Pointer][index]);
             __instance.m_hud.SetRequiredItemData(__instance.m_puzzleIndex, reqItemStatus);
         }
 
@@ -106,7 +102,7 @@ namespace ScanPosOverride.Patches
         {
             clustersChildrenReqItemsStatus.Clear();
             clustersChildrenReqItemNames.Clear();
-            clustersChildrenReqItemEnabled.Clear();
+            childrenReqItemEnabled.Clear();
         }
 
         static Patches_CP_Cluster_Hud_ReqItems()

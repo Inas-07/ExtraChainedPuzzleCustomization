@@ -18,22 +18,24 @@ namespace ScanPosOverride.Managers
         private Dictionary<IntPtr, List<CP_PlayerScanner>> CCCores { get; } = new();
 
         // key: CP_Cluster_Core.Pointer, value: its childCores
-        private Dictionary<IntPtr, List<CP_Bioscan_Core>> CCChildCores { get; } = new();
+        private Dictionary<IntPtr, List<CP_Bioscan_Core>> CCChildren { get; } = new();
 
         // concurrent cluster scan state
         // we use HashSet.Count to evaluate if all child scans satisfy progressing requirement and should thus progress
         // key: CP_Cluster_Core.Pointer, value: child states
-        private Dictionary<IntPtr, HashSet<IntPtr>> CCChildState { get; } = new();
+        private Dictionary<IntPtr, HashSet<IntPtr>> CCChildrenState { get; } = new();
 
         private Mutex CCStateMutex = null;
 
-        // original scan speed
-        private Dictionary<IntPtr, float[]> OriginalClusterScanSpeeds = new();
-        
-        // (cached) scanners for relevant CP_Bioscan_Core
-        private Dictionary<IntPtr, CP_PlayerScanner> Scanners = new();
+        // Key: CP_Cluster_Core.Pointer, value: children scan speed
+        private Dictionary<IntPtr, float[]> OriginalClusterScanSpeeds { get; } = new();
 
-        private Dictionary<IntPtr, float[]> OriginalScanSpeed = new();
+        // (cached) scanners for relevant CP_Bioscan_Core
+        // Key: CP_Bioscan_Core.Pointer, value: children scan speed
+        private Dictionary<IntPtr, CP_PlayerScanner> ChildScanners = new();
+
+        // Key: CP_Bioscan_Core.Pointer, value: children scan speed
+        private Dictionary<IntPtr, float[]> OriginalScanSpeed { get; } = new();
 
         // invoked after core.Setup()
         internal bool RegisterConcurrentCluster(CP_Cluster_Core core)
@@ -67,7 +69,7 @@ namespace ScanPosOverride.Managers
                 }
 
                 scanners[childIndex] = scanner;
-                Scanners.Add(IChildCore.Pointer, scanner);
+                ChildScanners.Add(IChildCore.Pointer, scanner);
                 childCores[childIndex] = child;
 
                 if (!OriginalClusterScanSpeeds.ContainsKey(core.Pointer))
@@ -80,8 +82,8 @@ namespace ScanPosOverride.Managers
             }
 
             CCCores.Add(core.Pointer, scanners);
-            CCChildCores.Add(core.Pointer, childCores);
-            CCChildState.Add(core.Pointer, new());
+            CCChildren.Add(core.Pointer, childCores);
+            CCChildrenState.Add(core.Pointer, new());
             return true;
         }
 
@@ -89,10 +91,10 @@ namespace ScanPosOverride.Managers
 
         internal bool IsConcurrentCluster(CP_Bioscan_Core core) => CCCores.ContainsKey(core.Owner.Pointer);
 
-        internal void ZeroCCScanSpeed(CP_Cluster_Core clusterCore)
+        internal void ZeroCCScanSpeed(CP_Cluster_Core parent)
         {
-            if (!CCCores.ContainsKey(clusterCore.Pointer)) return;
-            foreach(var childScanner in CCCores[clusterCore.Pointer])
+            if (!CCCores.ContainsKey(parent.Pointer)) return;
+            foreach(var childScanner in CCCores[parent.Pointer])
             {
                 bool IsAlreadyZeroed = true;
                 for (int i = 0; i < 4; i++)
@@ -105,12 +107,12 @@ namespace ScanPosOverride.Managers
             }
         }
 
-        internal void RestoreCCScanSpeed(CP_Cluster_Core clusterCore)
+        internal void RestoreCCScanSpeed(CP_Cluster_Core parent)
         {
-            if (!CCCores.ContainsKey(clusterCore.Pointer) || !OriginalClusterScanSpeeds.ContainsKey(clusterCore.Pointer)) return;
-            float[] originalScanSpeed = OriginalClusterScanSpeeds[clusterCore.Pointer];
+            if (!CCCores.ContainsKey(parent.Pointer) || !OriginalClusterScanSpeeds.ContainsKey(parent.Pointer)) return;
+            float[] originalScanSpeed = OriginalClusterScanSpeeds[parent.Pointer];
 
-            foreach (var childScanner in CCCores[clusterCore.Pointer])
+            foreach (var childScanner in CCCores[parent.Pointer])
             {
                 bool IsAlreadyRestored = false;
                 for (int i = 0; i < 4; i++)
@@ -153,12 +155,12 @@ namespace ScanPosOverride.Managers
         // get scanner for concurrent cluster & T scan
         public CP_PlayerScanner GetCacheScanner(CP_Bioscan_Core core)
         {
-            if(Scanners.ContainsKey(core.Pointer)) return Scanners[core.Pointer];
+            if(ChildScanners.ContainsKey(core.Pointer)) return ChildScanners[core.Pointer];
 
             CP_PlayerScanner scanner = core.PlayerScanner.TryCast<CP_PlayerScanner>();
             if (scanner == null) return null;
 
-            Scanners.Add(core.Pointer, scanner);
+            ChildScanners.Add(core.Pointer, scanner);
 
             return scanner;
         }
@@ -181,14 +183,14 @@ namespace ScanPosOverride.Managers
                 }
 
                 CP_Cluster_Core parent = child.Owner.Cast<CP_Cluster_Core>();
-                if (!CCChildState.ContainsKey(parent.Pointer))
+                if (!CCChildrenState.ContainsKey(parent.Pointer))
                 {
                     SPOLogger.Error("ConcurrentClusterShouldProgress: ConcurrentClusterChildScanState initialization error!");
                     CCStateMutex.ReleaseMutex();
                     return false;
                 }
 
-                var childScanState = CCChildState[parent.Pointer];
+                var childScanState = CCChildrenState[parent.Pointer];
                 bool ScanShouldProgress;
                 if (IsThisScanShouldProgress)
                 {
@@ -216,11 +218,11 @@ namespace ScanPosOverride.Managers
 
         internal void CompleteConcurrentCluster(CP_Cluster_Core parent)
         {
-            if (!CCChildCores.ContainsKey(parent.Pointer)) return;
+            if (!CCChildren.ContainsKey(parent.Pointer)) return;
 
-            var childCores = CCChildCores[parent.Pointer];
+            var childCores = CCChildren[parent.Pointer];
 
-            CCChildCores.Remove(parent.Pointer);
+            CCChildren.Remove(parent.Pointer);
             foreach (var child in childCores)
             {
                 child.m_sync.SetStateData(eBioscanStatus.Finished);
@@ -237,10 +239,10 @@ namespace ScanPosOverride.Managers
         public void Clear()
         {
             CCCores.Clear();
-            CCChildCores.Clear();
-            CCChildState.Clear();
+            CCChildren.Clear();
+            CCChildrenState.Clear();
             OriginalClusterScanSpeeds.Clear();
-            Scanners.Clear();
+            ChildScanners.Clear();
             OriginalScanSpeed.Clear();
 
             if (CCStateMutex != null)

@@ -27,6 +27,8 @@ namespace ScanPosOverride.PuzzleOverrideData
 
         public bool HideSpline { get; set; } = false;
 
+        public Vec3 PrevPosOverride { get; set; } = new Vec3();
+
         public bool ConcurrentCluster { get; set; } = false;
 
         public float TMoveSpeedMulti { get; set; } = -1.0f;
@@ -35,7 +37,7 @@ namespace ScanPosOverride.PuzzleOverrideData
 
         public List<ClusterProgressEvent> EventsOnClusterProgress { get; set; } = new() { new() };
 
-        public List<Vec3> TPositions { get; set; } = new List<Vec3>();
+        public List<Vec3> TPositions { get; set; } = new List<Vec3>() { new() };
 
         public List<int> RequiredItemsIndices { get; set; } = new() { 0 };
 

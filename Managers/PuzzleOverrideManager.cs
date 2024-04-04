@@ -13,18 +13,15 @@ namespace ScanPosOverride.Managers
 
         public static readonly PuzzleOverrideManager Current;
 
-        // core -> info
-        private Dictionary<CP_Bioscan_Core, uint> bioscanCore2Index = new();
-        private Dictionary<CP_Cluster_Core, uint> clusterCore2Index = new();
+        // key: CP_Bioscan_Core.Pointer, value: override index
+        private Dictionary<IntPtr, uint> bioscanIndex { get; } = new();
 
-        private Dictionary<uint, CP_Bioscan_Core> index2BioscanCore = new();
-        private Dictionary<uint, CP_Cluster_Core> index2ClusterCore = new();
+        // key: CP_Cluster_Core.Pointer, value: override index
+        private Dictionary<IntPtr, uint> clusterIndex { get; } = new();
 
+        private Dictionary<uint, CP_Bioscan_Core> index2Bioscan { get; } = new();
 
-        // casting between iChainedPuzzleCore and CP_Bioscan_Core, CP_Cluster_Core is too painful.
-        // so make life easier.
-        private Dictionary<IntPtr, uint> bioscanCoreIntPtr2Index = new();
-        private Dictionary<IntPtr, uint> clusterCoreIntPtr2Index = new();
+        private Dictionary<uint, CP_Cluster_Core> index2Cluster { get; } = new();
 
         private uint puzzleOverrideIndex = 1u;
 
@@ -34,11 +31,11 @@ namespace ScanPosOverride.Managers
 
             uint allotedIndex = puzzleOverrideIndex;
             puzzleOverrideIndex += 1;
-            if (!bioscanCore2Index.ContainsKey(__instance))
+            if (!bioscanIndex.ContainsKey(__instance.Pointer))
             {
-                bioscanCore2Index.Add(__instance, allotedIndex);
-                bioscanCoreIntPtr2Index.Add(__instance.Pointer, allotedIndex);
-                index2BioscanCore.Add(allotedIndex, __instance);
+                bioscanIndex.Add(__instance.Pointer, allotedIndex);
+                //bioscanCoreIntPtr2Index.Add(__instance.Pointer, allotedIndex);
+                index2Bioscan.Add(allotedIndex, __instance);
                 return allotedIndex;
             }
             else
@@ -53,11 +50,11 @@ namespace ScanPosOverride.Managers
 
             uint allotedIndex = puzzleOverrideIndex;
             puzzleOverrideIndex += 1;
-            if (!clusterCore2Index.ContainsKey(__instance))
+            if (!clusterIndex.ContainsKey(__instance.Pointer))
             {
-                clusterCore2Index.Add(__instance, allotedIndex);
-                clusterCoreIntPtr2Index.Add(__instance.Pointer, allotedIndex);
-                index2ClusterCore.Add(allotedIndex, __instance);
+                clusterIndex.Add(__instance.Pointer, allotedIndex);
+                //clusterCoreIntPtr2Index.Add(__instance.Pointer, allotedIndex);
+                index2Cluster.Add(allotedIndex, __instance);
                return allotedIndex;
             }
             else
@@ -100,9 +97,11 @@ namespace ScanPosOverride.Managers
                     iChainedPuzzleCore core = chainedPuzzleInstance.m_chainedPuzzleCores[i];
 
                     // CP_Bioscan_Core
-                    if (bioscanCoreIntPtr2Index.ContainsKey(core.Pointer))
+                    
+                    if (bioscanIndex.ContainsKey(core.Pointer))
+                    //if (bioscanCoreIntPtr2Index.ContainsKey(core.Pointer))
                     {
-                        uint puzzleOverrideIndex = bioscanCoreIntPtr2Index[core.Pointer];
+                        uint puzzleOverrideIndex = bioscanIndex[core.Pointer];
                         chainedPuzzlesInfo.Append($"puzzle index: {i}\n");
                         chainedPuzzlesInfo.Append("type: CP_Bioscan_Core\n");
                         chainedPuzzlesInfo.Append($"PuzzleOverrideIndex: {puzzleOverrideIndex}\n");
@@ -114,9 +113,9 @@ namespace ScanPosOverride.Managers
                     }
 
                     // CP_Cluster_Core
-                    else if (clusterCoreIntPtr2Index.ContainsKey(core.Pointer))
+                    else if (clusterIndex.ContainsKey(core.Pointer))
                     {
-                        uint clusterCoreOverrideIndex = clusterCoreIntPtr2Index[core.Pointer];
+                        uint clusterCoreOverrideIndex = clusterIndex[core.Pointer];
                         CP_Cluster_Core clusterCore = core.TryCast<CP_Cluster_Core>();
                         if (clusterCore == null)
                         {
@@ -131,13 +130,13 @@ namespace ScanPosOverride.Managers
                         for (int j = 0; j < clusterCore.m_amountOfPuzzles; j++)
                         {
                             iChainedPuzzleCore clusterChildCore = clusterCore.m_childCores[j];
-                            if (!bioscanCoreIntPtr2Index.ContainsKey(clusterChildCore.Pointer))
+                            if (!bioscanIndex.ContainsKey(clusterChildCore.Pointer))
                             {
                                 SPOLogger.Error("Unregistered clustered iChainedPuzzleCore found...");
                                 continue;
                             }
 
-                            uint puzzleOverrideIndex = bioscanCoreIntPtr2Index[clusterChildCore.Pointer];
+                            uint puzzleOverrideIndex = bioscanIndex[clusterChildCore.Pointer];
                             chainedPuzzlesInfo.Append($"puzzle index: {j}\n");
                             chainedPuzzlesInfo.Append("type: CP_Bioscan_Core\n");
                             chainedPuzzlesInfo.Append($"PuzzleOverrideIndex: {puzzleOverrideIndex}\n");
@@ -161,27 +160,25 @@ namespace ScanPosOverride.Managers
             SPOLogger.Debug(chainedPuzzlesInfo.ToString());
         }
 
-        public uint GetBioscanCoreOverrideIndex(CP_Bioscan_Core core) => !bioscanCore2Index.ContainsKey(core) ? 0u : bioscanCore2Index[core];
+        public uint GetBioscanCoreOverrideIndex(CP_Bioscan_Core core) => !bioscanIndex.ContainsKey(core.Pointer) ? 0u : bioscanIndex[core.Pointer];
 
-        public uint GetClusterCoreOverrideIndex(CP_Cluster_Core core) => !clusterCore2Index.ContainsKey(core) ? 0u : clusterCore2Index[core];
+        public uint GetClusterCoreOverrideIndex(CP_Cluster_Core core) => !clusterIndex.ContainsKey(core.Pointer) ? 0u : clusterIndex[core.Pointer];
 
-        public uint GetBioscanCoreOverrideIndex(IntPtr pointer) => !bioscanCoreIntPtr2Index.ContainsKey(pointer) ? 0u : bioscanCoreIntPtr2Index[pointer];
+        public uint GetBioscanCoreOverrideIndex(IntPtr pointer) => !bioscanIndex.ContainsKey(pointer) ? 0u : bioscanIndex[pointer];
 
-        public uint GetClusterCoreOverrideIndex(IntPtr pointer) => !clusterCoreIntPtr2Index.ContainsKey(pointer) ? 0u : clusterCoreIntPtr2Index[pointer];
+        public uint GetClusterCoreOverrideIndex(IntPtr pointer) => !clusterIndex.ContainsKey(pointer) ? 0u : clusterIndex[pointer];
 
-        public CP_Bioscan_Core GetBioscanCore(uint puzzleOverrideIndex) => index2BioscanCore.ContainsKey(puzzleOverrideIndex) ? index2BioscanCore[puzzleOverrideIndex] : null;
+        public CP_Bioscan_Core GetBioscanCore(uint puzzleOverrideIndex) => index2Bioscan.ContainsKey(puzzleOverrideIndex) ? index2Bioscan[puzzleOverrideIndex] : null;
         
-        public CP_Cluster_Core GetClusterCore(uint puzzleOverrideIndex) => index2ClusterCore.ContainsKey(puzzleOverrideIndex) ? index2ClusterCore[puzzleOverrideIndex] : null;
+        public CP_Cluster_Core GetClusterCore(uint puzzleOverrideIndex) => index2Cluster.ContainsKey(puzzleOverrideIndex) ? index2Cluster[puzzleOverrideIndex] : null;
 
         public void Clear()
         {
             puzzleOverrideIndex = 1u;
-            bioscanCore2Index.Clear();
-            clusterCore2Index.Clear();
-            bioscanCoreIntPtr2Index.Clear();
-            clusterCoreIntPtr2Index.Clear();
-            index2BioscanCore.Clear();
-            index2ClusterCore.Clear();
+            bioscanIndex.Clear();
+            clusterIndex.Clear();
+            index2Bioscan.Clear();
+            index2Cluster.Clear();
         }
 
         private PuzzleOverrideManager() { }
@@ -190,6 +187,7 @@ namespace ScanPosOverride.Managers
         {
             Current = new();
             LevelAPI.OnEnterLevel += Current.OutputLevelPuzzleInfo;
+            LevelAPI.OnBuildStart += Current.Clear;
             LevelAPI.OnLevelCleanup += Current.Clear;
         }
 

@@ -20,15 +20,9 @@ namespace ScanPosOverride.Patches
 
             CP_BasicMovable TComponent = movingComp.Cast<CP_BasicMovable>();
             iChainedPuzzleCore coreComp = gameObject.GetComponent<iChainedPuzzleCore>();
-            CP_Bioscan_Core core = coreComp.TryCast<CP_Bioscan_Core>();
+            CP_Bioscan_Core core = coreComp.Cast<CP_Bioscan_Core>();
 
-            if(core == null)
-            {
-                SPOLogger.Error("Pre_SetupMovement: iChainedPuzzleCore -> CP_Bioscan_Core failed");
-                return true;
-            }
-
-            uint TScanPuzzleIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(core.Pointer);
+            uint TScanPuzzleIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(core);
 
             if (TScanPuzzleIndex == 0)
             {

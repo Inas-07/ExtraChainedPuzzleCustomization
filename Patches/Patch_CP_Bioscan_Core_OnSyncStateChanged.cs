@@ -35,11 +35,11 @@ namespace ScanPosOverride.Patches
         {
             var overrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(__instance);
             var def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
-            if(def != null && def.EventsOnBioscanProgress?.Count > 0)
+            if (def != null && def.EventsOnBioscanProgress.Count > 0)
             {
-                CheckBioscanEventsOnProgress(progress);
+                CheckBioscanEventsOnProgress();
 
-                void CheckBioscanEventsOnProgress(float progress)
+                void CheckBioscanEventsOnProgress()
                 {
                     if (!EOPIndex.ContainsKey(__instance.Pointer))
                     {
@@ -123,7 +123,6 @@ namespace ScanPosOverride.Patches
 
             if (scanner == null)
             {
-                SPOLogger.Error("Null CP_PlayerScanner");
                 return;
             }
 
@@ -193,9 +192,7 @@ namespace ScanPosOverride.Patches
             {
                 if(IsConcurrentCluster)
                 {
-                    var parent = __instance.Owner.TryCast<CP_Cluster_Core>();
-                    if (parent == null) SPOLogger.Error("null clusterParent");
-
+                    var parent = __instance.Owner.Cast<CP_Cluster_Core>();
                     PlayerScannerManager.Current.RestoreCCScanSpeed(parent);
                 }
 
@@ -218,9 +215,7 @@ namespace ScanPosOverride.Patches
             {
                 if (IsConcurrentCluster)
                 {
-                    var parent = __instance.Owner.TryCast<CP_Cluster_Core>();
-                    if (parent == null) SPOLogger.Error("null clusterParent");
-
+                    var parent = __instance.Owner.Cast<CP_Cluster_Core>();
                     PlayerScannerManager.Current.ZeroCCScanSpeed(parent);
                 }
 

@@ -19,6 +19,9 @@ namespace ScanPosOverride.Patches
             CP_Cluster_Core __instance, int puzzleIndex, iChainedPuzzleOwner owner,
             ref Vector3 prevPuzzlePos, ref bool revealWithHoloPath)
         {
+            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
+            PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
+
             ChainedPuzzleInstance scanOwner = new ChainedPuzzleInstance(owner.Pointer);
 
             // -----------------------------------------
@@ -28,61 +31,65 @@ namespace ScanPosOverride.Patches
             // if last puzzle is overriden.
             // will affect vanilla setup as well, but nothing would break if works.
             // -----------------------------------------
-            if (puzzleIndex == 0)
+            if (def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
             {
-
+                prevPuzzlePos = def.PrevPosOverride.ToVector3();
             }
             else
             {
-                // prevPuzzlePos should be position of last scan.
-                CP_Bioscan_Core lastSinglePuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Bioscan_Core>();
-                if (lastSinglePuzzle != null)
+                if (puzzleIndex == 0)
                 {
-                    prevPuzzlePos = lastSinglePuzzle.transform.position;
+
                 }
                 else
                 {
-                    CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
-                    if (lastClusterPuzzle == null)
+                    // prevPuzzlePos should be position of last scan.
+                    CP_Bioscan_Core lastSinglePuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Bioscan_Core>();
+                    if (lastSinglePuzzle != null)
                     {
-                        SPOLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
+                        prevPuzzlePos = lastSinglePuzzle.transform.position;
                     }
+                    else
+                    {
+                        CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
+                        if (lastClusterPuzzle == null)
+                        {
+                            SPOLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
+                        }
 
-                    else prevPuzzlePos = lastClusterPuzzle.transform.position;
+                        else
+                        {
+                            prevPuzzlePos = lastClusterPuzzle.transform.position;
+                        }
+                    }
                 }
             }
 
             // -----------------------------------------
             //   modify clustering position
             // -----------------------------------------
-            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
-            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
-            if (puzzleOverride == null) return;
+            if (def == null) return;
 
-            if (puzzleOverride.Position.x != 0.0 || puzzleOverride.Position.y != 0.0 || puzzleOverride.Position.z != 0.0
-                || puzzleOverride.Rotation.x != 0.0 || puzzleOverride.Rotation.y != 0.0 || puzzleOverride.Rotation.z != 0.0)
+            if (def.Position.x != 0.0 || def.Position.y != 0.0 || def.Position.z != 0.0
+                || def.Rotation.x != 0.0 || def.Rotation.y != 0.0 || def.Rotation.z != 0.0)
             {
-                __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
+                __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
             }
 
-            if (puzzleOverride.EventsOnPuzzleSolved != null && puzzleOverride.EventsOnPuzzleSolved.Count > 0)
+            if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0)
             {
-                __instance.add_OnPuzzleDone(new System.Action<int>((i) => {
-                    foreach (WardenObjectiveEventData e in puzzleOverride.EventsOnPuzzleSolved)
-                    {
-                        WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(e, eWardenObjectiveEventTrigger.None, true);
-                    }
-                }));
+                __instance.add_OnPuzzleDone(new Action<int>((_) => WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), 
+                    eWardenObjectiveEventTrigger.None, true)));
             }
 
-            if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
+            if (def.RequiredItemsIndices != null && def.RequiredItemsIndices.Count > 0)
             {
-                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
+                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, def.RequiredItemsIndices);
             }
 
             // no spline for T scan
             // prolly work for "clustered T-scan" as well?
-            if (puzzleOverride.HideSpline)
+            if (def.HideSpline)
             {
                 revealWithHoloPath = false;
             }
@@ -90,47 +97,21 @@ namespace ScanPosOverride.Patches
             SPOLogger.Warning("Overriding CP_Cluster_Core!");
         }
 
-        // handle cluster T-scan
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Cluster_Core), nameof(CP_Cluster_Core.Setup))]
         private static void Post_CP_Cluster_Core_Setup(CP_Cluster_Core __instance)
         {
-            foreach(var childCore in __instance.m_childCores)
+            // =============================================
+            //              handle cluster T-scan
+            // =============================================
+            ChainedPuzzleInstance chainedPuzzle = __instance.m_owner.Cast<ChainedPuzzleInstance>();
+            foreach (var childCore in __instance.m_childCores)
             {
                 if (!childCore.IsMovable) continue;
                 uint puzzleOverrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(childCore.Pointer);
                 if (puzzleOverrideIndex == 0) continue;
 
-                PuzzleOverride TScanPositions = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
-
-                if (TScanPositions == null || TScanPositions.TPositions == null || TScanPositions.TPositions.Count < 1)
-                {
-                    SPOLogger.Error("No Override for this T-Scan, falling back to vanilla impl.");
-                    continue;
-                }
-
-                CP_Bioscan_Core TScanCore = new CP_Bioscan_Core(childCore.Pointer);
-
-                if(TScanCore.m_movingComp == null)
-                {
-                    Debug.LogError("Chained puzzle instance set to movable but does not include iChainedPuzzleMovable.");
-                }
-                else if (TScanCore.m_movingComp.UsingStaticBioscanPoints)
-                {
-                    foreach (var pos in TScanPositions.TPositions)
-                        TScanCore.m_movingComp.ScanPositions.Add(pos.ToVector3());
-
-                    TScanCore.transform.position = TScanPositions.TPositions[0].ToVector3();
-
-                    // disable the holopath after Setup() complete.
-                    __instance.m_revealWithHoloPath = false;
-                    SPOLogger.Warning("Overriding T-Scan pos!");
-                }
-                else
-                {
-                    Debug.LogError("Unimplemented.");
-                    // Lazy. No impl.
-                }
+                chainedPuzzle.SetupMovement(childCore.Cast<CP_Bioscan_Core>().gameObject, chainedPuzzle.m_sourceArea);
             }
 
             uint overrideIndex = PuzzleOverrideManager.Current.GetClusterCoreOverrideIndex(__instance);
@@ -139,14 +120,17 @@ namespace ScanPosOverride.Patches
             PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
             if(def == null) return;
 
-            if(def.ConcurrentCluster)
+            // =============================================
+            //              concurrent cluster
+            // =============================================
+            if (def.ConcurrentCluster)
             {
                 if (2 <= __instance.m_childCores.Count && __instance.m_childCores.Count <= 4)
                 {
-                    var parentHud = __instance.m_hud.Cast<CP_Bioscan_Hud>();
+                    var parentHud = __instance.m_hud.Cast<CP_Cluster_Hud>();
                     var cchud = parentHud.gameObject.AddComponent<ConcurrentClusterHud>();
                     cchud.parent = __instance;
-                    cchud.parentHud = parentHud;
+                    cchud.parentHud = parentHud.m_hud.Cast<CP_Bioscan_Hud>();
                     cchud.def = def;
                     if(cchud.Setup())
                     {
@@ -170,7 +154,7 @@ namespace ScanPosOverride.Patches
             {
                 foreach(var child in __instance.m_childCores)
                 {
-                    child.add_OnPuzzleDone(new System.Action<int>(CheckEventsOnClusterProgress));
+                    child.add_OnPuzzleDone(new Action<int>(CheckEventsOnClusterProgress));
                 }
 
                 void CheckEventsOnClusterProgress(int puzzleIndex)

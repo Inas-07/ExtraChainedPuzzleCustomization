@@ -29,6 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Component\ConcurrentClusterHud.cs" />
     <Compile Include="JSON\InjectLibUtil.cs" />
     <Compile Include="JSON\LocalizedTextConverter.cs" />
     <Compile Include="JSON\MyVector3Converter.cs" />

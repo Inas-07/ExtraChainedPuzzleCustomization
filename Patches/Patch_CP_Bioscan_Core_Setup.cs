@@ -1,14 +1,9 @@
 ﻿using ChainedPuzzles;
 using HarmonyLib;
-using LevelGeneration;
 using UnityEngine;
 using ScanPosOverride.PuzzleOverrideData;
 using GameData;
 using ScanPosOverride.Managers;
-
-using Il2cppPlayerList = Il2CppSystem.Collections.Generic.List<Player.PlayerAgent>;
-using Il2cppBoolArray = Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<bool>;
-using GTFO.API.Extensions;
 
 namespace ScanPosOverride.Patches
 {
@@ -22,6 +17,8 @@ namespace ScanPosOverride.Patches
         {
             // owner could either be ChainedPuzzleInstance (single scan), or CP_Cluster_Core (clustered scan).
             ChainedPuzzleInstance scanOwner = owner.TryCast<ChainedPuzzleInstance>();
+            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
+            PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
             // ========================================
             //              single scan 
@@ -35,27 +32,37 @@ namespace ScanPosOverride.Patches
                 // if last puzzle is overriden.
                 // will affect vanilla setup as well, but nothing would break if works.
                 // -----------------------------------------
-                if (puzzleIndex == 0)
+                if(def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
                 {
-                    // prevPuzzlePos should be Sec-Door transform. 
-                    // Do nothing
+                    prevPuzzlePos = def.PrevPosOverride.ToVector3();
                 }
-                else // puzzleIndex > 0
+                else
                 {
-                    // prevPuzzlePos should be position of last scan.
-                    CP_Bioscan_Core lastSinglePuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Bioscan_Core>();
-                    if (lastSinglePuzzle != null)
+                    if (puzzleIndex == 0)
                     {
-                        prevPuzzlePos = lastSinglePuzzle.transform.position;
+                        // prevPuzzlePos should be Sec-Door transform. 
+                        // Do nothing
                     }
-                    else
+                    else // puzzleIndex > 0
                     {
-                        CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
-                        if (lastClusterPuzzle == null)
+                        // prevPuzzlePos should be position of last scan.
+                        CP_Bioscan_Core lastSinglePuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Bioscan_Core>();
+                        if (lastSinglePuzzle != null)
                         {
-                            SPOLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
+                            prevPuzzlePos = lastSinglePuzzle.transform.position;
                         }
-                        else prevPuzzlePos = lastClusterPuzzle.transform.position;
+                        else
+                        {
+                            CP_Cluster_Core lastClusterPuzzle = scanOwner.m_chainedPuzzleCores[puzzleIndex - 1].TryCast<CP_Cluster_Core>();
+                            if (lastClusterPuzzle == null)
+                            {
+                                SPOLogger.Error($"Cannot cast m_chainedPuzzleCores[{puzzleIndex - 1}] to neither CP_Bioscan_Core or CP_Cluster_Core! WTF???");
+                            }
+                            else
+                            {
+                                prevPuzzlePos = lastClusterPuzzle.transform.position;
+                            }
+                        }
                     }
                 }
             }
@@ -90,22 +97,20 @@ namespace ScanPosOverride.Patches
             // -----------------------------------------
             //   modify this puzzle position / rotation
             // -----------------------------------------
-            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
-            PuzzleOverride puzzleOverride = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
             // No override. use vanilla
-            if (puzzleOverride == null) return;
+            if (def == null) return;
 
-            if (puzzleOverride.Position.x != 0.0 || puzzleOverride.Position.y != 0.0 || puzzleOverride.Position.z != 0.0
-                || puzzleOverride.Rotation.x != 0.0 || puzzleOverride.Rotation.y != 0.0 || puzzleOverride.Rotation.z != 0.0)
+            if (def.Position.x != 0.0 || def.Position.y != 0.0 || def.Position.z != 0.0
+                || def.Rotation.x != 0.0 || def.Rotation.y != 0.0 || def.Rotation.z != 0.0)
             {
-                __instance.transform.SetPositionAndRotation(puzzleOverride.Position.ToVector3(), puzzleOverride.Rotation.ToQuaternion());
+                __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
             }
 
-            if (puzzleOverride.EventsOnPuzzleSolved != null && puzzleOverride.EventsOnPuzzleSolved.Count > 0) 
+            if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0) 
             {
                 __instance.add_OnPuzzleDone(new System.Action<int>((i) => {
-                    foreach(WardenObjectiveEventData e in puzzleOverride.EventsOnPuzzleSolved)
+                    foreach(WardenObjectiveEventData e in def.EventsOnPuzzleSolved)
                     {
                         WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(e, eWardenObjectiveEventTrigger.None, true);
                     }
@@ -114,66 +119,66 @@ namespace ScanPosOverride.Patches
 
             // no spline for T scan
             // prolly work for "clustered T-scan" as well?
-            if (puzzleOverride.HideSpline ||  __instance.m_movingComp != null && __instance.m_movingComp.IsMoveConfigured)
+            if (def.HideSpline ||  __instance.m_movingComp != null && __instance.m_movingComp.IsMoveConfigured)
             {
                 revealWithHoloPath = false;
             }
 
-            if (puzzleOverride.RequiredItemsIndices != null && puzzleOverride.RequiredItemsIndices.Count > 0)
+            if (def.RequiredItemsIndices != null && def.RequiredItemsIndices.Count > 0)
             {
-                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, puzzleOverride.RequiredItemsIndices);
+                PuzzleReqItemManager.Current.QueueForAddingReqItems(__instance, def.RequiredItemsIndices);
             }
             
             SPOLogger.Warning("Overriding CP_Bioscan_Core." + (scanOwner == null ? "" : $"Zone {scanOwner.m_sourceArea.m_zone.Alias}, Layer {scanOwner.m_sourceArea.m_zone.Layer.m_type}, Dim {scanOwner.m_sourceArea.m_zone.DimensionIndex}"));
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.Setup))]
-        private static void Post_CP_Bioscan_Core_Setup(CP_Bioscan_Core __instance)
-        {
-            uint puzzleOverrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(__instance);
-            PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
+        //[HarmonyPostfix]
+        //[HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.Setup))]
+        //private static void Post_CP_Bioscan_Core_Setup(CP_Bioscan_Core __instance)
+        //{
+        //    uint puzzleOverrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(__instance);
+        //    PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
-            //TODO: execute events on progress 
-            if (def != null)
-            {
-                int i = 0; // def.EventsOnProgress[i] are the events that should be executed next
+        //    //TODO: execute events on progress 
+        //    if (def != null)
+        //    {
+        //        int i = 0; // def.EventsOnProgress[i] are the events that should be executed next
 
-                // type name too long exception. WON'T WORK!
-                //__instance.m_sync.add_OnSyncStateChange(new System.Action<eBioscanStatus, float, Il2cppPlayerList, int, Il2cppBoolArray, bool>(CheckBioscanEventsOnProgress));
+        //        type name too long exception. WON'T WORK!
+        //        __instance.m_sync.add_OnSyncStateChange(new System.Action<eBioscanStatus, float, Il2cppPlayerList, int, Il2cppBoolArray, bool>(CheckBioscanEventsOnProgress));
 
-                //void CheckBioscanEventsOnProgress(eBioscanStatus status, float progress,
-                //    Il2cppPlayerList playersInScan, int playerMax, Il2cppBoolArray reqItemStatus,
-                //    bool isDropinState)
-                //{
-                //    if (isDropinState)
-                //    {
-                //        while (i < def.EventsOnBioscanProgress.Count)
-                //        {
-                //            var curEOP = def.EventsOnBioscanProgress[i];
-                //            if (curEOP.Progress > progress)
-                //            {
-                //                break;
-                //            }
-                //            else
-                //            {
-                //                i++;
-                //            }
-                //        }
-                //        return;
-                //    }
+        //        void CheckBioscanEventsOnProgress(eBioscanStatus status, float progress,
+        //            Il2cppPlayerList playersInScan, int playerMax, Il2cppBoolArray reqItemStatus,
+        //            bool isDropinState)
+        //        {
+        //            if (isDropinState)
+        //            {
+        //                while (i < def.EventsOnBioscanProgress.Count)
+        //                {
+        //                    var curEOP = def.EventsOnBioscanProgress[i];
+        //                    if (curEOP.Progress > progress)
+        //                    {
+        //                        break;
+        //                    }
+        //                    else
+        //                    {
+        //                        i++;
+        //                    }
+        //                }
+        //                return;
+        //            }
 
-                //    if (i < def.EventsOnBioscanProgress.Count)
-                //    {
-                //        var curEOP = def.EventsOnBioscanProgress[i];
-                //        if (curEOP.Progress < progress)
-                //        {
-                //            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
-                //            i += 1;
-                //        }
-                //    }
-                //}
-            }
-        }
+        //            if (i < def.EventsOnBioscanProgress.Count)
+        //            {
+        //                var curEOP = def.EventsOnBioscanProgress[i];
+        //                if (curEOP.Progress < progress)
+        //                {
+        //                    WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+        //                    i += 1;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
     }
 }

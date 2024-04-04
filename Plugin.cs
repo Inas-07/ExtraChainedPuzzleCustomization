@@ -62,6 +62,7 @@ namespace ScanPosOverride
                         continue;
                     }
 
+                    puzzleToOverride.EventsOnBioscanProgress.RemoveAll(e => e.Progress <= 0.0f);
                     puzzleToOverride.EventsOnBioscanProgress.Sort((e1, e2) => Mathf.RoundToInt(e1.Progress - e2.Progress));
                     levelPuzzleToOverride.Add(puzzleToOverride.Index, puzzleToOverride);
                 }
