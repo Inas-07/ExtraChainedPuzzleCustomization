@@ -3,42 +3,45 @@ using System.Collections.Generic;
 using GTFO.API;
 using System.Linq;
 using System.Threading;
-using System.Runtime.CompilerServices;
+using System;
 
 namespace ScanPosOverride.Managers
 {
     public class PlayerScannerManager
     {
-        public static readonly PlayerScannerManager Current;
+        private static readonly float[] ZERO_SCAN_SPEED = new float[4] { 0.0f, 0.0f, 0.0f, 0.0f };
+
+        public static PlayerScannerManager Current { get; }
 
         // concurrent cluster scan registration.
-        private Dictionary<System.IntPtr, List<CP_PlayerScanner>> ConcurrentClusterCores = new();
-        private Dictionary<System.IntPtr, List<CP_Bioscan_Core>> ConcurrentClusterChildCores = new();
-        private Dictionary<System.IntPtr, CP_Cluster_Core> ConcurrentScanClusterParents = new();
+        // key: CP_Cluster_Core.Pointer, value: PlayerScanners of its childCores
+        private Dictionary<IntPtr, List<CP_PlayerScanner>> CCCores { get; } = new();
+
+        // key: CP_Cluster_Core.Pointer, value: its childCores
+        private Dictionary<IntPtr, List<CP_Bioscan_Core>> CCChildCores { get; } = new();
 
         // concurrent cluster scan state
         // we use HashSet.Count to evaluate if all child scans satisfy progressing requirement and should thus progress
-        private Dictionary<System.IntPtr, HashSet<System.IntPtr>> ConcurrentClusterChildScanState = new();
-        private Mutex ConcurrentClusterStateMutex = null;
+        // key: CP_Cluster_Core.Pointer, value: child states
+        private Dictionary<IntPtr, HashSet<IntPtr>> CCChildState { get; } = new();
+
+        private Mutex CCStateMutex = null;
 
         // original scan speed
-        private Dictionary<System.IntPtr, float[]> OriginalClusterScanSpeeds = new();
+        private Dictionary<IntPtr, float[]> OriginalClusterScanSpeeds = new();
         
         // (cached) scanners for relevant CP_Bioscan_Core
-        private Dictionary<System.IntPtr, CP_PlayerScanner> Scanners = new();
+        private Dictionary<IntPtr, CP_PlayerScanner> Scanners = new();
 
-        private Dictionary<System.IntPtr, float[]> OriginalScanSpeed = new();
-
-        private static readonly float[] ZERO_SCAN_SPEED = new float[4] { 0.0f, 0.0f, 0.0f, 0.0f } ;
+        private Dictionary<IntPtr, float[]> OriginalScanSpeed = new();
 
         // invoked after core.Setup()
         internal bool RegisterConcurrentCluster(CP_Cluster_Core core)
         {
-            if (ConcurrentClusterCores.ContainsKey(core.Pointer)) return false;
+            if (CCCores.ContainsKey(core.Pointer)) return false;
             List<CP_PlayerScanner> childScanners = Enumerable.Repeat<CP_PlayerScanner>(null, core.m_amountOfPuzzles).ToList();
             List<CP_Bioscan_Core> childCores = Enumerable.Repeat<CP_Bioscan_Core>(null, core.m_amountOfPuzzles).ToList();
 
-            float[] originalScanSpeed = new float[4];
             for (int childIndex = 0; childIndex < core.m_childCores.Count; childIndex++)
             {
                 if (childScanners[childIndex] != null)
@@ -70,31 +73,26 @@ namespace ScanPosOverride.Managers
                 if (!OriginalClusterScanSpeeds.ContainsKey(core.Pointer))
                 {
                     var speeds = scanner.m_scanSpeeds;
-                    for(int i = 0; i < 4; i++)
-                    {
-                        originalScanSpeed[i] = speeds[i];
-                    }
-
+                    float[] originalScanSpeed = new float[speeds.Length];
+                    Array.Copy(speeds, originalScanSpeed, speeds.Length);
                     OriginalClusterScanSpeeds.Add(core.Pointer, originalScanSpeed);
                 }
-
-                ConcurrentScanClusterParents.Add(IChildCore.Pointer, core);
             }
 
-            ConcurrentClusterCores.Add(core.Pointer, childScanners);
-            ConcurrentClusterChildCores.Add(core.Pointer, childCores);
-            ConcurrentClusterChildScanState.Add(core.Pointer, new());
+            CCCores.Add(core.Pointer, childScanners);
+            CCChildCores.Add(core.Pointer, childCores);
+            CCChildState.Add(core.Pointer, new());
             return true;
         }
 
-        internal bool IsConcurrentCluster(CP_Cluster_Core core) => ConcurrentClusterCores.ContainsKey(core.Pointer);
+        internal bool IsConcurrentCluster(CP_Cluster_Core core) => CCCores.ContainsKey(core.Pointer);
 
-        internal bool IsConcurrentCluster(CP_Bioscan_Core core) => ConcurrentScanClusterParents.ContainsKey(core.Pointer);
+        internal bool IsConcurrentCluster(CP_Bioscan_Core core) => CCCores.ContainsKey(core.Owner.Pointer);
 
-        internal void ZeroConcurrentClusterScanSpeed(CP_Cluster_Core clusterCore)
+        internal void ZeroCCScanSpeed(CP_Cluster_Core clusterCore)
         {
-            if (!ConcurrentClusterCores.ContainsKey(clusterCore.Pointer)) return;
-            foreach(var childScanner in ConcurrentClusterCores[clusterCore.Pointer])
+            if (!CCCores.ContainsKey(clusterCore.Pointer)) return;
+            foreach(var childScanner in CCCores[clusterCore.Pointer])
             {
                 bool IsAlreadyZeroed = true;
                 for (int i = 0; i < 4; i++)
@@ -107,12 +105,12 @@ namespace ScanPosOverride.Managers
             }
         }
 
-        internal void RestoreConcurrentClusterScanSpeed(CP_Cluster_Core clusterCore)
+        internal void RestoreCCScanSpeed(CP_Cluster_Core clusterCore)
         {
-            if (!ConcurrentClusterCores.ContainsKey(clusterCore.Pointer) || !OriginalClusterScanSpeeds.ContainsKey(clusterCore.Pointer)) return;
+            if (!CCCores.ContainsKey(clusterCore.Pointer) || !OriginalClusterScanSpeeds.ContainsKey(clusterCore.Pointer)) return;
             float[] originalScanSpeed = OriginalClusterScanSpeeds[clusterCore.Pointer];
 
-            foreach (var childScanner in ConcurrentClusterCores[clusterCore.Pointer])
+            foreach (var childScanner in CCCores[clusterCore.Pointer])
             {
                 bool IsAlreadyRestored = false;
                 for (int i = 0; i < 4; i++)
@@ -131,10 +129,7 @@ namespace ScanPosOverride.Managers
         {
             if(IsConcurrentCluster(core))
             {
-                if (!ConcurrentScanClusterParents.ContainsKey(core.Pointer)) return ZERO_SCAN_SPEED;
-                CP_Cluster_Core parent = ConcurrentScanClusterParents[core.Pointer];
-
-                return OriginalClusterScanSpeeds.ContainsKey(parent.Pointer) ? OriginalClusterScanSpeeds[parent.Pointer] : ZERO_SCAN_SPEED;
+                return CCCores.ContainsKey(core.Owner.Pointer) ? OriginalClusterScanSpeeds[core.Owner.Pointer] : ZERO_SCAN_SPEED;
             }
 
             else
@@ -149,17 +144,11 @@ namespace ScanPosOverride.Managers
                 }
 
                 float[] scanSpeeds = new float[4];
-                for(int i = 0; i < 4; i++)
-                {
-                    scanSpeeds[i] = scanner.m_scanSpeeds[i];
-                }
-
+                Array.Copy(scanner.m_scanSpeeds, scanSpeeds, scanSpeeds.Length);
                 OriginalScanSpeed.Add(core.Pointer, scanSpeeds);
                 return scanSpeeds;
             }
         }
-
-        internal CP_Cluster_Core GetParentClusterCore(CP_Bioscan_Core core) => ConcurrentScanClusterParents.ContainsKey(core.Pointer) ? ConcurrentScanClusterParents[core.Pointer] : null;
 
         // get scanner for concurrent cluster & T scan
         public CP_PlayerScanner GetCacheScanner(CP_Bioscan_Core core)
@@ -174,48 +163,48 @@ namespace ScanPosOverride.Managers
             return scanner;
         }
 
-        internal bool ConcurrentClusterShouldProgress(CP_Bioscan_Core core, bool IsThisScanShouldProgress)
+        internal bool CCShouldProgress(CP_Bioscan_Core child, bool IsThisScanShouldProgress)
         {
-            if(ConcurrentClusterStateMutex == null)
+            if(CCStateMutex == null)
             {
                 SPOLogger.Error("ConcurrentCluster: scan mutex uninitialized.");
                 return false;
             }
 
-            if (ConcurrentClusterStateMutex.WaitOne(2000))
+            if (CCStateMutex.WaitOne(2000))
             {
-                if(!ConcurrentScanClusterParents.ContainsKey(core.Pointer))
+                if(!CCCores.ContainsKey(child.Owner.Pointer))
                 {
                     SPOLogger.Error("ConcurrentClusterShouldProgress: failed to find cluster parent!");
-                    ConcurrentClusterStateMutex.ReleaseMutex();
+                    CCStateMutex.ReleaseMutex();
                     return false;
                 }
 
-                CP_Cluster_Core clusterParent = ConcurrentScanClusterParents[core.Pointer];
-                if (!ConcurrentClusterChildScanState.ContainsKey(clusterParent.Pointer))
+                CP_Cluster_Core parent = child.Owner.Cast<CP_Cluster_Core>();
+                if (!CCChildState.ContainsKey(parent.Pointer))
                 {
                     SPOLogger.Error("ConcurrentClusterShouldProgress: ConcurrentClusterChildScanState initialization error!");
-                    ConcurrentClusterStateMutex.ReleaseMutex();
+                    CCStateMutex.ReleaseMutex();
                     return false;
                 }
 
-                var childScanState = ConcurrentClusterChildScanState[clusterParent.Pointer];
+                var childScanState = CCChildState[parent.Pointer];
                 bool ScanShouldProgress;
                 if (IsThisScanShouldProgress)
                 {
-                    childScanState.Add(core.Pointer);
-                    ScanShouldProgress = childScanState.Count == clusterParent.m_amountOfPuzzles;
+                    childScanState.Add(child.Pointer);
+                    ScanShouldProgress = childScanState.Count == parent.m_amountOfPuzzles;
                 }
                 else
                 {
-                    childScanState.Remove(core.Pointer);
+                    childScanState.Remove(child.Pointer);
                     ScanShouldProgress = false;
                 }
 
                 //Logger.Debug($"Concurrent cluster: {clusterParent.m_amountOfPuzzles} children, {childScanState.Count} children should progress.");
 
                 // Release the Mutex.
-                ConcurrentClusterStateMutex.ReleaseMutex();
+                CCStateMutex.ReleaseMutex();
                 return ScanShouldProgress;
             }
             else
@@ -225,40 +214,39 @@ namespace ScanPosOverride.Managers
             }
         }
 
-        internal void CompleteConcurrentCluster(CP_Cluster_Core core)
+        internal void CompleteConcurrentCluster(CP_Cluster_Core parent)
         {
-            if (!ConcurrentClusterChildCores.ContainsKey(core.Pointer)) return;
+            if (!CCChildCores.ContainsKey(parent.Pointer)) return;
 
-            var childCores = ConcurrentClusterChildCores[core.Pointer];
+            var childCores = CCChildCores[parent.Pointer];
 
-            ConcurrentClusterChildCores.Remove(core.Pointer);
-            foreach (var childCore in childCores)
+            CCChildCores.Remove(parent.Pointer);
+            foreach (var child in childCores)
             {
-                childCore.m_sync.SetStateData(eBioscanStatus.Finished);
+                child.m_sync.SetStateData(eBioscanStatus.Finished);
             }
         }
 
         public void Init()
         {
-            ConcurrentClusterStateMutex = new();
+            CCStateMutex = new();
         }
 
         public void Clear()
         {
-            ConcurrentClusterCores.Clear();
-            ConcurrentClusterChildCores.Clear();
-            ConcurrentScanClusterParents.Clear();
-            ConcurrentClusterChildScanState.Clear();
+            CCCores.Clear();
+            CCChildCores.Clear();
+            CCChildState.Clear();
             OriginalClusterScanSpeeds.Clear();
             Scanners.Clear();
             OriginalScanSpeed.Clear();
 
-            if (ConcurrentClusterStateMutex != null)
+            if (CCStateMutex != null)
             {
-                ConcurrentClusterStateMutex.Dispose();
+                CCStateMutex.Dispose();
             }
 
-            ConcurrentClusterStateMutex = null;
+            CCStateMutex = null;
         }
 
         static PlayerScannerManager() 

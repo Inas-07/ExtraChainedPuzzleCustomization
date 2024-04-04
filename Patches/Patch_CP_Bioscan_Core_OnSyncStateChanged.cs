@@ -1,25 +1,84 @@
 ﻿using ChainedPuzzles;
 using HarmonyLib;
-using Il2CppSystem.Collections.Generic;
-using LevelGeneration;
 using Player;
+using LevelGeneration;
 using UnityEngine;
 using ScanPosOverride.Managers;
+using GameData;
+using System.Collections.Generic;
+using Il2cppPlayerList = Il2CppSystem.Collections.Generic.List<Player.PlayerAgent>;
+using GTFO.API;
+using GTFO.API.Extensions;
 
 namespace ScanPosOverride.Patches
 {
     [HarmonyPatch]
     internal class Patch_CP_Bioscan_Core_OnSyncStateChange
     {
-        // implementation of T-Scan moving policy && Concurrent cluster scan both fall into this method.
+        // implementation of:
+        // 1. T-Scan moving policy
+        // 2. Concurrent cluster scan 
+        // 3. Events on bioscan progress
         // maintaining this patch could make you insane 
+        private static Dictionary<System.IntPtr, int> EOPIndex = new();
+
+        static Patch_CP_Bioscan_Core_OnSyncStateChange()
+        {
+            LevelAPI.OnBuildStart += EOPIndex.Clear;
+            LevelAPI.OnLevelCleanup += EOPIndex.Clear;
+        }
+
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
         private static void Post_CP_Bioscan_Core_OnSyncStateChanged(CP_Bioscan_Core __instance, float progress,
-            eBioscanStatus status, List<PlayerAgent> playersInScan)
+            eBioscanStatus status, Il2cppPlayerList playersInScan, bool isDropinState)
         {
-            bool IsConcurrentCluster = PlayerScannerManager.Current.IsConcurrentCluster(__instance);
+            var overrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(__instance);
+            var def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
+            if(def != null && def.EventsOnBioscanProgress?.Count > 0)
+            {
+                CheckBioscanEventsOnProgress(progress);
 
+                void CheckBioscanEventsOnProgress(float progress)
+                {
+                    if (!EOPIndex.ContainsKey(__instance.Pointer))
+                    {
+                        EOPIndex[__instance.Pointer] = 0;
+                    }
+
+                    int i = EOPIndex[__instance.Pointer];
+                    if (isDropinState)
+                    {
+                        while (i < def.EventsOnBioscanProgress.Count)
+                        {
+                            var curEOP = def.EventsOnBioscanProgress[i];
+                            if (curEOP.Progress > progress)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                i++;
+                            }
+                        }
+                        return;
+                    }
+
+                    if (i < def.EventsOnBioscanProgress.Count)
+                    {
+                        var curEOP = def.EventsOnBioscanProgress[i];
+                        if (curEOP.Progress < progress)
+                        {
+                            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+                            EOPIndex[__instance.Pointer] = i + 1;
+                        }
+                    }
+                }
+            }
+
+
+            // handle reqItem and CP_Basic_Movable
+            bool IsConcurrentCluster = PlayerScannerManager.Current.IsConcurrentCluster(__instance);
             // DEBUG:
             if(IsConcurrentCluster && __instance.m_reqItemsEnabled)
             {
@@ -32,19 +91,21 @@ namespace ScanPosOverride.Patches
                 {
                     if(status == eBioscanStatus.Finished)
                     {
-                        var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                        if(clusterParent == null)
+                        //var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
+                        var parent = __instance.Owner.TryCast<CP_Cluster_Core>();
+
+                        if (parent == null)
                         {
                             SPOLogger.Error("Cannot find parent cluster core! The concurrent cluster may fail!");
                         }
                         else
                         {
-                            PlayerScannerManager.Current.CompleteConcurrentCluster(clusterParent);
+                            PlayerScannerManager.Current.CompleteConcurrentCluster(parent);
                         }
                     }
                     else
                     {
-                        PlayerScannerManager.Current.ConcurrentClusterShouldProgress(__instance, false);
+                        PlayerScannerManager.Current.CCShouldProgress(__instance, false);
                     }
                 }
 
@@ -120,11 +181,11 @@ namespace ScanPosOverride.Patches
             {
                 if(ScanShouldProgress)
                 {
-                    ScanShouldProgress = PlayerScannerManager.Current.ConcurrentClusterShouldProgress(__instance, true);
+                    ScanShouldProgress = PlayerScannerManager.Current.CCShouldProgress(__instance, true);
                 }
                 else // ScanShouldProgress == false
                 {
-                    PlayerScannerManager.Current.ConcurrentClusterShouldProgress(__instance, false);
+                    PlayerScannerManager.Current.CCShouldProgress(__instance, false);
                 }
             }
 
@@ -132,10 +193,10 @@ namespace ScanPosOverride.Patches
             {
                 if(IsConcurrentCluster)
                 {
-                    var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                    if (clusterParent == null) SPOLogger.Error("null clusterParent");
+                    var parent = __instance.Owner.TryCast<CP_Cluster_Core>();
+                    if (parent == null) SPOLogger.Error("null clusterParent");
 
-                    PlayerScannerManager.Current.RestoreConcurrentClusterScanSpeed(clusterParent);
+                    PlayerScannerManager.Current.RestoreCCScanSpeed(parent);
                 }
 
                 if (__instance.IsMovable)
@@ -157,10 +218,10 @@ namespace ScanPosOverride.Patches
             {
                 if (IsConcurrentCluster)
                 {
-                    var clusterParent = PlayerScannerManager.Current.GetParentClusterCore(__instance);
-                    if (clusterParent == null) SPOLogger.Error("null clusterParent");
+                    var parent = __instance.Owner.TryCast<CP_Cluster_Core>();
+                    if (parent == null) SPOLogger.Error("null clusterParent");
 
-                    PlayerScannerManager.Current.ZeroConcurrentClusterScanSpeed(clusterParent);
+                    PlayerScannerManager.Current.ZeroCCScanSpeed(parent);
                 }
 
                 if (__instance.IsMovable)
@@ -183,9 +244,5 @@ namespace ScanPosOverride.Patches
             }
         }
 
-        static Patch_CP_Bioscan_Core_OnSyncStateChange()
-        {
-
-        }
     }
 }

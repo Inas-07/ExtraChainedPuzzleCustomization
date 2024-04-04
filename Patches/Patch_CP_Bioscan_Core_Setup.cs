@@ -139,39 +139,40 @@ namespace ScanPosOverride.Patches
             {
                 int i = 0; // def.EventsOnProgress[i] are the events that should be executed next
 
-                __instance.m_sync.add_OnSyncStateChange(new System.Action<eBioscanStatus, float, Il2cppPlayerList, int, Il2cppBoolArray, bool>(CheckBioscanEventsOnProgress));
-                
-                void CheckBioscanEventsOnProgress(eBioscanStatus status, float progress,
-                    Il2cppPlayerList playersInScan, int playerMax, Il2cppBoolArray reqItemStatus,
-                    bool isDropinState)
-                {
-                    if (isDropinState)
-                    {
-                        while (i < def.EventsOnBioscanProgress.Count)
-                        {
-                            var curEOP = def.EventsOnBioscanProgress[i];
-                            if (curEOP.Progress > progress)
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                i++;
-                            }
-                        }
-                        return;
-                    }
+                // type name too long exception. WON'T WORK!
+                //__instance.m_sync.add_OnSyncStateChange(new System.Action<eBioscanStatus, float, Il2cppPlayerList, int, Il2cppBoolArray, bool>(CheckBioscanEventsOnProgress));
 
-                    if (i < def.EventsOnBioscanProgress.Count)
-                    {
-                        var curEOP = def.EventsOnBioscanProgress[i];
-                        if (curEOP.Progress < progress) 
-                        {
-                            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
-                            i += 1;
-                        }
-                    }
-                }
+                //void CheckBioscanEventsOnProgress(eBioscanStatus status, float progress,
+                //    Il2cppPlayerList playersInScan, int playerMax, Il2cppBoolArray reqItemStatus,
+                //    bool isDropinState)
+                //{
+                //    if (isDropinState)
+                //    {
+                //        while (i < def.EventsOnBioscanProgress.Count)
+                //        {
+                //            var curEOP = def.EventsOnBioscanProgress[i];
+                //            if (curEOP.Progress > progress)
+                //            {
+                //                break;
+                //            }
+                //            else
+                //            {
+                //                i++;
+                //            }
+                //        }
+                //        return;
+                //    }
+
+                //    if (i < def.EventsOnBioscanProgress.Count)
+                //    {
+                //        var curEOP = def.EventsOnBioscanProgress[i];
+                //        if (curEOP.Progress < progress)
+                //        {
+                //            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+                //            i += 1;
+                //        }
+                //    }
+                //}
             }
         }
     }
