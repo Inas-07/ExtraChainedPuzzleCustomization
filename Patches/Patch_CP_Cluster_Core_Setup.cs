@@ -31,19 +31,35 @@ namespace ScanPosOverride.Patches
             // if last puzzle is overriden.
             // will affect vanilla setup as well, but nothing would break if works.
             // -----------------------------------------
-            if (def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
+            bool prevPosOverride = false;
+            if(def != null)
             {
-                prevPuzzlePos = def.PrevPosOverride.ToVector3();
-            }
-            else if (def != null && def.PrevPosOverrideIndex > 0)
-            {
-                var overridePosition = PuzzleOverrideManager.Current.GetBioscanCore(def.PrevPosOverrideIndex)?.m_position
-                    ?? PuzzleOverrideManager.Current.GetClusterCore(def.PrevPosOverrideIndex)?.transform.position
-                    ?? prevPuzzlePos; // default to what it already was if getting either of the previous fails
-                prevPuzzlePos = overridePosition;
+                if (def.PrevPosOverride.ToVector3() != Vector3.zero)
+                {
+                    prevPuzzlePos = def.PrevPosOverride.ToVector3();
+                    prevPosOverride = true;
+                }
+                else if (def.PrevPosOverrideIndex > 0)
+                {
+                    var overridePosition = PuzzleOverrideManager.Current.GetBioscanCore(def.PrevPosOverrideIndex)?.m_position
+                        ?? PuzzleOverrideManager.Current.GetClusterCore(def.PrevPosOverrideIndex)?.transform.position
+                        ?? Vector3.zero; // default to what it already was if getting either of the previous fails
 
+                    if (overridePosition == Vector3.zero)
+                    {
+                        SPOLogger.Error($"PuzzleOverrideIndex: {puzzleOverrideIndex} - trying to use 'PrevPosOverrideIndex' ({def.PrevPosOverrideIndex}) but the puzzle is not found.");
+                        SPOLogger.Error($"The puzzle is probably yet registered. NOTE: 'PrevPosOverrideIndex' could only be a integer that is less than PuzzleOverrideIndex({puzzleOverrideIndex})");
+                        prevPosOverride = false;
+                    }
+                    else
+                    {
+                        prevPuzzlePos = overridePosition;
+                        prevPosOverride = true;
+                    }
+                }
             }
-            else
+
+            if (!prevPosOverride)
             {
                 if (puzzleIndex == 0)
                 {
@@ -78,8 +94,7 @@ namespace ScanPosOverride.Patches
             // -----------------------------------------
             if (def == null) return;
 
-            if (def.Position.x != 0.0 || def.Position.y != 0.0 || def.Position.z != 0.0
-                || def.Rotation.x != 0.0 || def.Rotation.y != 0.0 || def.Rotation.z != 0.0)
+            if (def.Position.ToVector3() != Vector3.zero || def.Rotation.ToVector3() != Vector3.zero)
             {
                 __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
             }
