@@ -34,6 +34,10 @@ namespace ScanPosOverride.Patches
                 {
                     prevPuzzlePos = def.PrevPosOverride.ToVector3();
                 }
+                else if (def != null && def.PrevPosOverrideIndex > 0)
+                {
+                    prevPuzzlePos = PuzzleOverrideManager.Current.GetBioscanCore(def.PrevPosOverrideIndex).m_position;
+                }
                 else
                 {
                     if (puzzleIndex == 0)
@@ -73,6 +77,10 @@ namespace ScanPosOverride.Patches
                 if (def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
                 {
                     prevPuzzlePos = def.PrevPosOverride.ToVector3();
+                }
+                else if (def != null && def.PrevPosOverrideIndex > 0)
+                {
+                    prevPuzzlePos = PuzzleOverrideManager.Current.GetBioscanCore(def.PrevPosOverrideIndex).m_position;
                 }
                 else
                 {
