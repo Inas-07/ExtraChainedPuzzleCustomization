@@ -28,6 +28,7 @@ namespace ScanPosOverride.PuzzleOverrideData
         public bool HideSpline { get; set; } = false;
 
         public Vec3 PrevPosOverride { get; set; } = new Vec3();
+
         public uint PrevPosOverrideIndex { get; set; } = 0;
 
         public bool ConcurrentCluster { get; set; } = false;
