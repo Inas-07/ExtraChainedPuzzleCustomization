@@ -4,6 +4,7 @@ using UnityEngine;
 using ScanPosOverride.PuzzleOverrideData;
 using GameData;
 using ScanPosOverride.Managers;
+using GTFO.API.Extensions;
 
 namespace ScanPosOverride.Patches
 {
@@ -21,18 +22,15 @@ namespace ScanPosOverride.Patches
             PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
             // ========================================
-            //              single scan 
+            //           modify `prevPuzzlePos`.
+            // we don't want to use the (random / static) position 
+            // from ChainedPuzzleInstance.Setup() 
+            // if last puzzle is overriden.
+            // will affect vanilla setup as well, but nothing would break if works.
             // ========================================
-            if (scanOwner != null)
+            if (scanOwner != null) // single scan 
             {
-                // -----------------------------------------
-                //           modify `prevPuzzlePos`.
-                // we don't want to use the (random / static) position 
-                // from ChainedPuzzleInstance.Setup() 
-                // if last puzzle is overriden.
-                // will affect vanilla setup as well, but nothing would break if works.
-                // -----------------------------------------
-                if(def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
+                if (def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
                 {
                     prevPuzzlePos = def.PrevPosOverride.ToVector3();
                 }
@@ -67,36 +65,30 @@ namespace ScanPosOverride.Patches
                 }
             }
 
-            // ========================================
-            //              clustered scan 
-            // ========================================
-            else
+            else // clustered scan 
             {
-                CP_Cluster_Core clusterOwner = owner.TryCast<CP_Cluster_Core>();
-                if (clusterOwner == null)
+                CP_Cluster_Core clusterOwner = owner.Cast<CP_Cluster_Core>();
+
+                // -----------------------------------------
+                if (def != null && def.PrevPosOverride.ToVector3() != Vector3.zero)
                 {
-                    SPOLogger.Error("Onwer is not neither ChainedPuzzleInstance nor CP_Cluster_Core. What r u?");
-                    return;
+                    prevPuzzlePos = def.PrevPosOverride.ToVector3();
+                }
+                else
+                {
+                    prevPuzzlePos = clusterOwner.transform.position;
                 }
 
-                prevPuzzlePos = clusterOwner.transform.position;
-
-                scanOwner = clusterOwner.m_owner.TryCast<ChainedPuzzleInstance>();
-                if(scanOwner == null)
-                {
-                    SPOLogger.Error("Failed to cast clusterOwner.m_owner to ChainedPuzzleInstance");
-                    return;
-                }
-
+                scanOwner = clusterOwner.m_owner.Cast<ChainedPuzzleInstance>();
                 if(scanOwner.Data.OnlyShowHUDWhenPlayerIsClose == true)
                 {
                     onlyShowHUDWhenPlayerIsClose = true;
                 }
             }
 
-            // -----------------------------------------
+            // ========================================
             //   modify this puzzle position / rotation
-            // -----------------------------------------
+            // ========================================
 
             // No override. use vanilla
             if (def == null) return;
@@ -109,12 +101,8 @@ namespace ScanPosOverride.Patches
 
             if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0) 
             {
-                __instance.add_OnPuzzleDone(new System.Action<int>((i) => {
-                    foreach(WardenObjectiveEventData e in def.EventsOnPuzzleSolved)
-                    {
-                        WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(e, eWardenObjectiveEventTrigger.None, true);
-                    }
-                }));
+                __instance.add_OnPuzzleDone(new System.Action<int>((_) => 
+                    WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true)));
             }
 
             // no spline for T scan

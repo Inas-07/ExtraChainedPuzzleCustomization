@@ -40,12 +40,13 @@ namespace ScanPosOverride.Patches
 
             _override.TPositions.ForEach(pos => movingComp.ScanPositions.Add(pos.ToVector3()));
             gameObject.transform.position = _override.TPositions[0].ToVector3();
-            SPOLogger.Warning("Overriding T-Scan pos!");
 
             TComponent.m_amountOfPositions = _override.TPositions.Count;
 
             if(_override.TMoveSpeedMulti > 0f)
                 TComponent.m_movementSpeed *= _override.TMoveSpeedMulti;
+
+            SPOLogger.Warning("Overriding T-Scan pos!");
             return false;
         }
     }

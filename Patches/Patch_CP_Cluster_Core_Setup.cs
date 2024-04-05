@@ -22,7 +22,7 @@ namespace ScanPosOverride.Patches
             uint puzzleOverrideIndex = PuzzleOverrideManager.Current.Register(__instance);
             PuzzleOverride def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, puzzleOverrideIndex);
 
-            ChainedPuzzleInstance scanOwner = new ChainedPuzzleInstance(owner.Pointer);
+            ChainedPuzzleInstance scanOwner = owner.Cast<ChainedPuzzleInstance>();
 
             // -----------------------------------------
             //           modify `prevPuzzlePos`.
@@ -139,7 +139,7 @@ namespace ScanPosOverride.Patches
                     }
                     else
                     {
-                        SPOLogger.Warning("Concurrent Cluster: faild to setup");
+                        SPOLogger.Warning("Concurrent Cluster: failed to setup");
                     }
                 }
 
