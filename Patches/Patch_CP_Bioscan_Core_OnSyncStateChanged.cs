@@ -28,14 +28,17 @@ namespace ScanPosOverride.Patches
             LevelAPI.OnLevelCleanup += EOPIndex.Clear;
         }
 
+        // I'm tired of maintaining all shit in a single patch so I isolate them
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
-        private static void Post_CP_Bioscan_Core_OnSyncStateChanged(CP_Bioscan_Core __instance, float progress,
+        private static void Post_OnSyncStateChanged_CheckEOPAndEventsOnPuzzleSolved(CP_Bioscan_Core __instance, float progress,
             eBioscanStatus status, Il2cppPlayerList playersInScan, bool isDropinState)
         {
             var overrideIndex = PuzzleOverrideManager.Current.GetBioscanCoreOverrideIndex(__instance);
             var def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
-            if (def != null && def.EventsOnBioscanProgress.Count > 0)
+            if (def == null) return;
+
+            if (def.EventsOnBioscanProgress.Count > 0)
             {
                 CheckBioscanEventsOnProgress();
 
@@ -76,7 +79,18 @@ namespace ScanPosOverride.Patches
                 }
             }
 
+            if (status == eBioscanStatus.Finished && !isDropinState && def.EventsOnPuzzleSolved.Count > 0)
+            {
+                WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+            }
+        }
 
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
+        private static void Post_OnSyncStateChanged_CheckReqItemAndConcurrentCluster(CP_Bioscan_Core __instance, float progress,
+            eBioscanStatus status, Il2cppPlayerList playersInScan, bool isDropinState)
+        {
             // handle reqItem and CP_Basic_Movable
             bool IsConcurrentCluster = PlayerScannerManager.Current.IsConcurrentCluster(__instance);
             // DEBUG:

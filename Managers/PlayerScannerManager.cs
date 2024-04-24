@@ -169,8 +169,7 @@ namespace ScanPosOverride.Managers
         {
             if(CCStateMutex == null)
             {
-                SPOLogger.Error("ConcurrentCluster: scan mutex uninitialized.");
-                return false;
+                CCStateMutex = new();
             }
 
             if (CCStateMutex.WaitOne(2000))
@@ -216,7 +215,7 @@ namespace ScanPosOverride.Managers
             }
         }
 
-        internal void CompleteConcurrentCluster(CP_Cluster_Core parent)
+        internal void CompleteConcurrentCluster(CP_Cluster_Core parent, CP_Bioscan_Core child)
         {
             if (!CCChildren.ContainsKey(parent.Pointer)) return;
 
@@ -230,11 +229,6 @@ namespace ScanPosOverride.Managers
         }
 
         public List<CP_PlayerScanner> GetCCChildrenScanner(CP_Cluster_Core parent) => CCCores.ContainsKey(parent.Pointer) ? CCCores[parent.Pointer] : null;
-
-        public void Init()
-        {
-            CCStateMutex = new();
-        }
 
         public void Clear()
         {
@@ -256,7 +250,6 @@ namespace ScanPosOverride.Managers
         static PlayerScannerManager() 
         { 
             Current = new PlayerScannerManager();
-            LevelAPI.OnBuildDone += Current.Init;
             LevelAPI.OnLevelCleanup += Current.Clear;
         }
 

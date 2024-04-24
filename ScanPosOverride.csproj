@@ -35,11 +35,13 @@
     <Compile Include="JSON\MyVector3Converter.cs" />
     <Compile Include="Managers\PlayerScannerManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />
+    <Compile Include="Patches\Patch_CP_BasicMovable_TryGetNextIndex.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_OnSyncStateChanged.cs" />
     <Compile Include="Patches\Patch_CP_Bioscan_Core_Setup.cs" />
     <Compile Include="Managers\PuzzleOverrideManager.cs" />
     <Compile Include="Patches\Patch_ChainedPuzzleInstance_SetupMovement.cs" />
     <Compile Include="Patches\Patch_CarryItemPickup_Core_Setup.cs" />
+    <Compile Include="Patches\Patch_CP_Cluster_Core_OnSyncStateChaged.cs" />
     <Compile Include="Patches\Patch_CP_Cluster_Core_Setup.cs" />
     <Compile Include="Patches\Patches_CP_Cluster_Hud_ReqItems.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverrideJsonFile.cs" />
@@ -53,5 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Dependencies.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wiki\image\" />
+    <Folder Include="wiki\video\" />
   </ItemGroup>
 </Project>

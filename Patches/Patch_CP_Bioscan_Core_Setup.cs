@@ -139,11 +139,11 @@ namespace ScanPosOverride.Patches
                 __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
             }
 
-            if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0) 
-            {
-                __instance.add_OnPuzzleDone(new System.Action<int>((_) => 
-                    WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true)));
-            }
+            //if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0) 
+            //{
+            //    __instance.add_OnPuzzleDone(new System.Action<int>((_) => 
+            //        WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true)));
+            //}
 
             // no spline for T scan
             // prolly work for "clustered T-scan" as well?

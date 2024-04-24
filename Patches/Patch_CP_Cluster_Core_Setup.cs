@@ -99,11 +99,11 @@ namespace ScanPosOverride.Patches
                 __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
             }
 
-            if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0)
-            {
-                __instance.add_OnPuzzleDone(new Action<int>((_) => WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), 
-                    eWardenObjectiveEventTrigger.None, true)));
-            }
+            //if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0)
+            //{
+            //    __instance.add_OnPuzzleDone(new Action<int>((_) => WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), 
+            //        eWardenObjectiveEventTrigger.None, true)));
+            //}
 
             if (def.RequiredItemsIndices != null && def.RequiredItemsIndices.Count > 0)
             {
