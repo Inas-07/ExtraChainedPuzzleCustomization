@@ -116,12 +116,7 @@ namespace ScanPosOverride.Managers
                     else if (clusterIndex.ContainsKey(core.Pointer))
                     {
                         uint clusterCoreOverrideIndex = clusterIndex[core.Pointer];
-                        CP_Cluster_Core clusterCore = core.TryCast<CP_Cluster_Core>();
-                        if (clusterCore == null)
-                        {
-                            SPOLogger.Error("Found cluster core Pointer, but TryCast failed.");
-                            continue;
-                        }
+                        CP_Cluster_Core clusterCore = core.Cast<CP_Cluster_Core>();
 
                         chainedPuzzlesInfo.Append($"puzzle index: {i}\n");
                         chainedPuzzlesInfo.Append("type: CP_Cluster_Core\n");

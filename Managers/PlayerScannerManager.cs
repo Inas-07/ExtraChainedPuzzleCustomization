@@ -17,8 +17,10 @@ namespace ScanPosOverride.Managers
         // key: CP_Cluster_Core.Pointer, value: PlayerScanners of its childCores
         private Dictionary<IntPtr, List<CP_PlayerScanner>> CCCores { get; } = new();
 
-        // key: CP_Cluster_Core.Pointer, value: its childCores
-        private Dictionary<IntPtr, List<CP_Bioscan_Core>> CCChildren { get; } = new();
+        // key: CP_Cluster_Core.Pointer, value: IntPtr HashSet of its childCores
+        //private Dictionary<IntPtr, List<CP_Bioscan_Core>> CCChildren { get; } = new();
+        private Dictionary<IntPtr, HashSet<IntPtr>> CCChildren { get; } = new();
+
 
         // concurrent cluster scan state
         // we use HashSet.Count to evaluate if all child scans satisfy progressing requirement and should thus progress
@@ -42,7 +44,9 @@ namespace ScanPosOverride.Managers
         {
             if (CCCores.ContainsKey(core.Pointer)) return false;
             List<CP_PlayerScanner> scanners = Enumerable.Repeat<CP_PlayerScanner>(null, core.m_amountOfPuzzles).ToList();
-            List<CP_Bioscan_Core> childCores = Enumerable.Repeat<CP_Bioscan_Core>(null, core.m_amountOfPuzzles).ToList();
+            //List<CP_Bioscan_Core> childCores = Enumerable.Repeat<CP_Bioscan_Core>(null, core.m_amountOfPuzzles).ToList();
+
+            var childCores = new HashSet<IntPtr>();
 
             for (int childIndex = 0; childIndex < core.m_childCores.Count; childIndex++)
             {
@@ -70,7 +74,7 @@ namespace ScanPosOverride.Managers
 
                 scanners[childIndex] = scanner;
                 ChildScanners.Add(IChildCore.Pointer, scanner);
-                childCores[childIndex] = child;
+                childCores.Add(child.Pointer);
 
                 if (!OriginalClusterScanSpeeds.ContainsKey(core.Pointer))
                 {
@@ -221,10 +225,16 @@ namespace ScanPosOverride.Managers
 
             var childCores = CCChildren[parent.Pointer];
 
-            CCChildren.Remove(parent.Pointer);
-            foreach (var child in childCores)
+            //foreach (var child in childCores)
+            //{
+            //    child.m_sync.SetStateData(eBioscanStatus.Finished);
+            //}
+
+            // NOTE: changed behavior, to handle case like booster increasing scan speed of a child puzzle
+            childCores.Remove(child.Pointer);
+            if(childCores.Count < 1)
             {
-                child.m_sync.SetStateData(eBioscanStatus.Finished);
+                CCChildren.Remove(parent.Pointer);
             }
         }
 

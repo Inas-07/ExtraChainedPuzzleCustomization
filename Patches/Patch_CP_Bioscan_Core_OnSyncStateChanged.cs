@@ -13,7 +13,7 @@ using GTFO.API.Extensions;
 namespace ScanPosOverride.Patches
 {
     [HarmonyPatch]
-    internal class Patch_CP_Bioscan_Core_OnSyncStateChange
+    internal static class Patch_CP_Bioscan_Core_OnSyncStateChange
     {
         // implementation of:
         // 1. T-Scan moving policy
@@ -114,7 +114,7 @@ namespace ScanPosOverride.Patches
                         }
                         else
                         {
-                            PlayerScannerManager.Current.CompleteConcurrentCluster(parent);
+                            PlayerScannerManager.Current.CompleteConcurrentCluster(parent, __instance);
                         }
                     }
                     else

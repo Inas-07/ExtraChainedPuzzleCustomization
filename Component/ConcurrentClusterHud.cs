@@ -170,7 +170,7 @@ namespace ScanPosOverride.Component
                 var child = children[i];
                 foreach(var p in PlayerManager.PlayerAgentsInLevel)
                 {
-                    if ((p.Position - child.m_position).magnitude < childRadius)
+                    if ((p.Position - child.transform.position).magnitude < childRadius)
                     {
                         cnt += 1;
                     }

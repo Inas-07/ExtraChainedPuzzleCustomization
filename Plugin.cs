@@ -8,10 +8,11 @@ using GTFO.API.Utilities;
 using HarmonyLib;
 using MTFO.API;
 using UnityEngine;
+using ChainedPuzzles;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.6.5")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.6.7")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
@@ -72,6 +73,8 @@ namespace ScanPosOverride
 
             listener = LiveEdit.CreateListener(OVERRIDE_SCAN_POS_PATH, "*.json", includeSubDir: true);
             listener.FileChanged += LiveEdit_FileChanged;
+
+            //ChainedPuzzleManager.DEBUG_ENABLED = true;
 
             m_Harmony = new Harmony("ScanPosOverride.Patches");
             m_Harmony.PatchAll();

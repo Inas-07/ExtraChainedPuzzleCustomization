@@ -139,6 +139,7 @@ namespace ScanPosOverride.Patches
                 __instance.transform.SetPositionAndRotation(def.Position.ToVector3(), def.Rotation.ToQuaternion());
             }
 
+            // NOTE: moved to OnSyncStateChanged to handle checkpoint restore
             //if (def.EventsOnPuzzleSolved != null && def.EventsOnPuzzleSolved.Count > 0) 
             //{
             //    __instance.add_OnPuzzleDone(new System.Action<int>((_) => 
