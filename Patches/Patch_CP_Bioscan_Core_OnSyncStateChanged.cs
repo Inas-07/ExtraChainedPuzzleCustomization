@@ -52,6 +52,7 @@ namespace ScanPosOverride.Patches
                     int i = EOPIndex[__instance.Pointer];
                     if (isDropinState)
                     {
+                        i = 0; // full reset to rerun events
                         while (i < def.EventsOnBioscanProgress.Count)
                         {
                             var curEOP = def.EventsOnBioscanProgress[i];
@@ -64,6 +65,7 @@ namespace ScanPosOverride.Patches
                                 i++;
                             }
                         }
+                        EOPIndex[__instance.Pointer] = i; // actually set the index to where it's supposed to be
                         return;
                     }
 
