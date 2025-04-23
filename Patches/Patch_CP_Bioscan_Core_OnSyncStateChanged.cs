@@ -28,7 +28,7 @@ namespace ScanPosOverride.Patches
             LevelAPI.OnLevelCleanup += EOPIndex.Clear;
         }
 
-        // I'm tired of maintaining all shit in a single patch so I isolate them
+        // I'm tired of maintaining all shit in a single patch so I separated them
         [HarmonyPostfix]
         [HarmonyPatch(typeof(CP_Bioscan_Core), nameof(CP_Bioscan_Core.OnSyncStateChange))]
         private static void Post_OnSyncStateChanged_CheckEOPAndEventsOnPuzzleSolved(CP_Bioscan_Core __instance, float progress,

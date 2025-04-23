@@ -9,10 +9,11 @@ using HarmonyLib;
 using MTFO.API;
 using UnityEngine;
 using ChainedPuzzles;
+using ScanPosOverride.JSON.PData;
 
 namespace ScanPosOverride
 {
-    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.6.7")]
+    [BepInPlugin("ScanPositionOverride", "ScanPositionOverride", "1.6.8")]
     [BepInDependency("dev.gtfomodding.gtfo-api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(MTFOPartialDataUtil.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]

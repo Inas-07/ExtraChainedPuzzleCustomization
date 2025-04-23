@@ -30,9 +30,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Component\ConcurrentClusterHud.cs" />
+    <Compile Include="JSON\Extensions\JsonExtensions.cs" />
+    <Compile Include="JSON\Extensions\RecursiveEnumerableExtensions.cs" />
     <Compile Include="JSON\InjectLibUtil.cs" />
     <Compile Include="JSON\LocalizedTextConverter.cs" />
     <Compile Include="JSON\MyVector3Converter.cs" />
+    <Compile Include="JSON\PData\PDataGUID.cs" />
+    <Compile Include="JSON\WritableLocalizedTextConverter.cs" />
     <Compile Include="Managers\PlayerScannerManager.cs" />
     <Compile Include="Managers\PuzzleReqItemManager.cs" />
     <Compile Include="Patches\Patch_CP_BasicMovable_TryGetNextIndex.cs" />
@@ -46,7 +50,7 @@
     <Compile Include="Patches\Patches_CP_Cluster_Hud_ReqItems.cs" />
     <Compile Include="PuzzleOverrideData\PuzzleOverrideJsonFile.cs" />
     <Compile Include="JSON\Json.cs" />
-    <Compile Include="JSON\MTFOPartialDataUtil.cs" />
+    <Compile Include="JSON\PData\MTFOPartialDataUtil.cs" />
     <Compile Include="JSON\MTFOUtil.cs" />
     <Compile Include="SPOLogger.cs" />
     <Compile Include="Plugin.cs" />
