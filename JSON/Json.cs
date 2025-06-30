@@ -22,39 +22,31 @@ namespace ScanPosOverride.JSON
         {
             _setting.Converters.Add(new JsonStringEnumConverter());
             _setting.Converters.Add(new MyVector3Converter());
-            if (MTFOPartialDataUtil.IsLoaded)
+            if (MTFOPartialDataUtil.IsLoaded && InjectLibUtil.IsLoaded)
             {
-                _setting.Converters.Add(MTFOPartialDataUtil.PersistentIDConverter);
-                _setting.Converters.Add(WritableLocalizedTextConverter.Converter);
-                //_setting.Converters.Add(MTFOPartialDataUtil.LocalizedTextConverter);
-                SPOLogger.Log("PartialData support found!");
+                _setting.Converters.Add(InjectLibUtil.InjectLibConnector);
+                _setting.Converters.Add(new LocalizedTextConverter());
+                SPOLogger.Log("InjectLib (AWO) && PartialData support found!");
             }
-
-            //if (MTFOPartialDataUtil.IsLoaded && InjectLibUtil.IsLoaded)
-            //{
-            //    _setting.Converters.Add(InjectLibUtil.InjectLibConnector);
-            //    _setting.Converters.Add(new LocalizedTextConverter());
-            //    SPOLogger.Log("InjectLib (AWO) && PartialData support found!");
-            //}
-            //else
-            //{
-            //    if (MTFOPartialDataUtil.IsLoaded)
-            //    {
-            //        _setting.Converters.Add(MTFOPartialDataUtil.PersistentIDConverter);
-            //        _setting.Converters.Add(WritableLocalizedTextConverter.Converter);
-            //        //_setting.Converters.Add(MTFOPartialDataUtil.LocalizedTextConverter);
-            //        SPOLogger.Log("PartialData support found!");
-            //    }
-            //    else
-            //    {
-            //        if (InjectLibUtil.IsLoaded)
-            //        {
-            //            _setting.Converters.Add(InjectLibUtil.InjectLibConnector);
-            //            SPOLogger.Log("InjectLib (AWO) support found!");
-            //        }
-            //        _setting.Converters.Add(new LocalizedTextConverter());
-            //    }
-            //}
+            else
+            {
+                if (MTFOPartialDataUtil.IsLoaded)
+                {
+                    _setting.Converters.Add(MTFOPartialDataUtil.PersistentIDConverter);
+                    _setting.Converters.Add(WritableLocalizedTextConverter.Converter);
+                    //_setting.Converters.Add(MTFOPartialDataUtil.LocalizedTextConverter);
+                    SPOLogger.Log("PartialData support found!");
+                }
+                else
+                {
+                    if (InjectLibUtil.IsLoaded)
+                    {
+                        _setting.Converters.Add(InjectLibUtil.InjectLibConnector);
+                        SPOLogger.Log("InjectLib (AWO) support found!");
+                    }
+                    _setting.Converters.Add(new LocalizedTextConverter());
+                }
+            }
 
             //if (MTFOPartialDataUtil.IsLoaded)
             //{
