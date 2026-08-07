@@ -41,7 +41,10 @@ namespace ScanPosOverride.Patches
             bool didProgress = false;
             if (def.EventsOnBioscanProgress.Count > 0)
             {
-                if (!EOPIndex.TryGetValue(__instance.Pointer, out var index))
+                int index;
+                if (isDropinState)
+                    index = 0;
+                else if(!EOPIndex.TryGetValue(__instance.Pointer, out index))
                     EOPIndex.Add(__instance.Pointer, index = 0);
 
                 int end = index;
