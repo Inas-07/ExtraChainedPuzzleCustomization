@@ -38,13 +38,16 @@ namespace ScanPosOverride.Patches
             var def = Plugin.GetOverride(PuzzleOverrideManager.MainLevelLayout, overrideIndex);
             if (def == null) return;
 
-            bool didProgress = false;
             if (def.EventsOnBioscanProgress.Count > 0)
             {
                 int index;
                 if (isDropinState)
+                {
                     index = 0;
-                else if(!EOPIndex.TryGetValue(__instance.Pointer, out index))
+                    if (status == eBioscanStatus.Finished)
+                        index = def.EventsOnBioscanProgress.Count + 1;
+                }
+                else if (!EOPIndex.TryGetValue(__instance.Pointer, out index))
                     EOPIndex.Add(__instance.Pointer, index = 0);
 
                 int end = index;
@@ -52,23 +55,25 @@ namespace ScanPosOverride.Patches
                     end++;
 
                 EOPIndex[__instance.Pointer] = end;
-                if (isDropinState || index == end) return;
-
-                didProgress = true;
-                for (; index < end; index++)
+                if (!isDropinState && index < end)
                 {
-                    WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[index].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+                    for (; index < end; index++)
+                    {
+                        WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[index].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
+                    }
                 }
             }
 
             if (status == eBioscanStatus.Finished && !isDropinState && def.EventsOnPuzzleSolved.Count > 0)
             {
-                // In case the scan has no EventsOnBioscanCoverage
+                // In case the scan has no EventsOnBioscanProgress
                 if (!EOPIndex.TryGetValue(__instance.Pointer, out var index))
                     EOPIndex.Add(__instance.Pointer, 0);
-                else if (!didProgress && index == def.EventsOnBioscanProgress.Count)
+                // HACK - Use index = EventsOnBioscanProgress + 1 to indicate that the finished event has ran
+                else if (index > def.EventsOnBioscanProgress.Count)
                     return;
 
+                EOPIndex[__instance.Pointer] = def.EventsOnBioscanProgress.Count + 1;
                 WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
             }
         }
