@@ -40,49 +40,40 @@ namespace ScanPosOverride.Patches
 
             if (def.EventsOnBioscanProgress.Count > 0)
             {
-                CheckBioscanEventsOnProgress();
-
-                void CheckBioscanEventsOnProgress()
+                int index;
+                if (isDropinState)
                 {
-                    if (!EOPIndex.ContainsKey(__instance.Pointer))
-                    {
-                        EOPIndex[__instance.Pointer] = 0;
-                    }
+                    index = 0;
+                    if (status == eBioscanStatus.Finished)
+                        index = def.EventsOnBioscanProgress.Count + 1;
+                }
+                else if (!EOPIndex.TryGetValue(__instance.Pointer, out index))
+                    EOPIndex.Add(__instance.Pointer, index = 0);
 
-                    int i = EOPIndex[__instance.Pointer];
-                    if (isDropinState)
-                    {
-                        i = 0; // full reset to rerun events
-                        while (i < def.EventsOnBioscanProgress.Count)
-                        {
-                            var curEOP = def.EventsOnBioscanProgress[i];
-                            if (curEOP.Progress > progress)
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                i++;
-                            }
-                        }
-                        EOPIndex[__instance.Pointer] = i; // actually set the index to where it's supposed to be
-                        return;
-                    }
+                int end = index;
+                while (end < def.EventsOnBioscanProgress.Count && def.EventsOnBioscanProgress[end].Progress <= progress)
+                    end++;
 
-                    if (i < def.EventsOnBioscanProgress.Count)
+                EOPIndex[__instance.Pointer] = end;
+                if (!isDropinState && index < end)
+                {
+                    for (; index < end; index++)
                     {
-                        var curEOP = def.EventsOnBioscanProgress[i];
-                        if (curEOP.Progress < progress)
-                        {
-                            WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[i].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
-                            EOPIndex[__instance.Pointer] = i + 1;
-                        }
+                        WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnBioscanProgress[index].Events.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
                     }
                 }
             }
 
             if (status == eBioscanStatus.Finished && !isDropinState && def.EventsOnPuzzleSolved.Count > 0)
             {
+                // In case the scan has no EventsOnBioscanProgress
+                if (!EOPIndex.TryGetValue(__instance.Pointer, out var index))
+                    EOPIndex.Add(__instance.Pointer, 0);
+                // HACK - Use index = EventsOnBioscanProgress + 1 to indicate that the finished event has ran
+                else if (index > def.EventsOnBioscanProgress.Count)
+                    return;
+
+                EOPIndex[__instance.Pointer] = def.EventsOnBioscanProgress.Count + 1;
                 WardenObjectiveManager.CheckAndExecuteEventsOnTrigger(def.EventsOnPuzzleSolved.ToIl2Cpp(), eWardenObjectiveEventTrigger.None, true);
             }
         }
